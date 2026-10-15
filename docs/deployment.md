@@ -244,6 +244,14 @@ ls -R dist | head -40
 `npm run verify:release` is a shortcut for step 3/4/8's validator when you do not
 need to assert a mode; it detects the mode from the output.
 
+**`--origin=` is not optional for a synthetic-origin build.** The validator treats
+an origin it *finds* in the output as part of what is being tested, and fails a
+build whose own canonical, `og:url`, sitemap and robots `Sitemap:` line all sit on
+a host that cannot be production — `example.com`, anything under
+`.test`/`.invalid`/`.example`, or loopback. Passing `--origin` is what says "this
+one is deliberate, and I am looking past it for the rest of the scan". A build on
+the real domain needs no flag, because nothing reserved appears in it.
+
 ### Determinism
 
 Two consecutive builds with the same `SITE_URL` produce byte-identical output,

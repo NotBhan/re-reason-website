@@ -133,5 +133,8 @@ the site follows them:
 checked to resolve before being added, and `repoBlob()` builds deep links from
 repository-relative paths so a source reference and its link cannot disagree.
 
-No production domain is known, so `astro.config.mjs` sets no `site`, and there
-are no canonical or Open Graph tags. Add them together with a `site` value.
+No production domain has been chosen, so `SITE_URL` is normally unset and the
+build stays domain-agnostic: no `site`, no canonical, no Open Graph URL, no
+sitemap. Setting it is the only change needed — see
+[deployment.md](./deployment.md). Nothing here writes a placeholder origin in the
+meantime.

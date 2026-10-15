@@ -4,7 +4,7 @@ State of the site's production readiness. Everything under **Verified** was
 actually run in this repository; everything under **Pending** needs a decision or
 a resource that does not exist yet.
 
-Last reviewed: 2026-10-15 (Stage 7). Commands are given so each claim can be
+Last reviewed: 2026-10-15 (Stage 8). Commands are given so each claim can be
 re-checked rather than taken on trust. Operational detail lives in
 [deployment.md](./deployment.md).
 
@@ -19,7 +19,7 @@ re-checked rather than taken on trust. Operational detail lives in
 | Type + template diagnostics | `npm run check` | 0 errors, 0 warnings, 0 hints |
 | Domain-agnostic build | `npm run build` (no `SITE_URL`) | 12 routes, succeeds, warns that it is incomplete |
 | Configured build | `SITE_URL=https://<test> npm run build` | 12 routes, canonical, Open Graph and sitemap emitted |
-| Release validation, both modes | `npm run verify:release` | Passes in domain-agnostic and configured modes |
+| Release validation, both modes | `npm run verify:release` | Passes in domain-agnostic and configured modes. A build made with a *synthetic* origin must also pass `--origin=<that origin>`; see "Release validator" below |
 | Determinism | two builds, `diff -rq` | Byte-identical |
 
 ### URL configuration
@@ -58,11 +58,38 @@ Verified in both modes by `scripts/verify-release.mjs` and by inspection:
 failed for the canonical link it is supposed to omit. Expected routes are derived
 from the page templates and content collections, so the list cannot drift.
 
-Nine deliberate defects were injected into a copy of a passing build, and all nine
-were caught: corrupted figure bytes, a deleted font licence, a deleted symbol
-font, a deleted route, an injected placeholder origin, an unexpected draft route,
-a canonical pointing at a development server, an unfilled `TODO`, and a sitemap
-missing a route.
+Nine deliberate defects were injected into a copy of a passing build in Stage 7,
+and all nine were caught: corrupted figure bytes, a deleted font licence, a
+deleted symbol font, a deleted route, an injected placeholder origin, an
+unexpected draft route, a canonical pointing at a development server, an unfilled
+`TODO`, and a sitemap missing a route.
+
+Stage 8 re-ran the adversarial pass as 40 cases against throwaway copies of a
+passing build (two controls plus 38 mutations), and found five gaps. All five are
+fixed and now have cases:
+
+- **A stray non-index `.html` file was invisible.** Route discovery collected only
+  `index.html`, so a page dropped into `public/` was copied to `dist/` and went
+  unreported in both modes. It is now reported like any other route.
+- **The Windows filesystem-path pattern never matched.** `\\\\` in a regex literal
+  means two literal backslashes, so the ordinary `C:\Users\…` form passed the
+  leak check. The POSIX form was never affected.
+- **An origin derived from the output was exempt from the placeholder scan.** The
+  validator reads the origin out of the canonical when `--origin` is absent, then
+  stripped that value before scanning for placeholders — so a build sitting
+  consistently on `example.com`, or on any reserved TLD, verified clean.
+- **The sitemap and the robots `Sitemap:` line were checked for shape but not for
+  origin.** URLs on an unrelated host passed.
+- **The placeholder scan never opened the built stylesheet.** Only HTML, robots
+  and the sitemap were read, so a `url(https://example.com/…)` or an unfilled
+  token in CSS shipped unexamined. The built CSS is now scanned; the vendored JS
+  bundles deliberately are not.
+
+The third has a consequence worth knowing: a build made with a synthetic origin
+must assert it (`--origin=https://<test>`) or the validator now fails it on
+purpose, naming the origin and saying so. `npm run verify:release` with no
+arguments remains sufficient for a build on the real domain, which is what step 8
+of the release procedure produces.
 
 ### Static output and preview
 
@@ -80,6 +107,11 @@ preview, which already knows the intended routing.
 
 The 301 result is the one that matters: it is what the `TRAILING_SLASH = 'always'`
 policy assumes, and the one thing a host can realistically get wrong.
+
+Re-run in Stage 8: 40 checks per mode against `python3 -m http.server`, both modes
+clean — every route, every asset class, the withheld figures (404), the sitemap in
+both modes, three unknown-path shapes, and the content types of `og.png` and the
+symbol subset.
 
 Also verified: 0 unresolved internal links across 181 on 12 pages; no
 `file://` paths, filesystem paths or development URLs in the output; no
@@ -107,8 +139,10 @@ development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
   [figures.md](./figures.md), quoted as the subject of the dispute. It is not
   presented as a finding anywhere.
 - Phase 1.6 still states `FAILED its gate` and `accuracy 0.0000 (0/16) across all
-  five seeds`; `speculative-pipeline` still states it was not built;
-  `nonlinear-candidate-mgu` still states it is not implemented or pursued.
+  five seeds`; `speculative-pipeline` still carries `implementation:
+  not-implemented` and states it was not built and is not currently pursued;
+  `nonlinear-candidate-mgu` still carries `implementation: implemented` and states
+  that the project makes no novelty claim for it.
 - Experiment entries carry `establishes`, `doesNotEstablish` and limitations;
   architecture entries carry implementation status, constraints and open
   questions; phase entries carry status, gate outcome and artifacts.
@@ -118,9 +152,9 @@ development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
 
 | Engine | How | Coverage |
 | --- | --- | --- |
-| Chromium 153 | Chrome DevTools Protocol | 5 routes × 3 widths = **15/15 scenarios pass** |
-| WebKit (WebKitGTK 2.52.6) | `python3 scripts/webkit-check.py` | 6 routes × 3 widths × 3 modes = **54/54 scenarios pass** |
-| Firefox 157 | headless capture, `ui.prefersReducedMotion=1` | 4 routes: non-blank, correctly sized, accent present |
+| WebKit (WebKitGTK 2.52.6) | `python3 scripts/webkit-check.py` — the only committed browser harness | 6 routes × 3 widths × 3 modes = **54/54 scenarios pass** |
+| Chromium 153 | ad-hoc CDP script, **not committed** | 6 routes × 3 widths × 2 modes = **36/36 scenarios pass** |
+| Firefox 157 | ad-hoc headless capture with `ui.prefersReducedMotion=1`, **not committed**, not re-run in Stage 8 | 4 routes: non-blank, correctly sized, accent present |
 
 Chromium and WebKit assert one `h1` per page, no horizontal overflow, no broken
 images, no dead in-page anchors, no console errors, no failed requests, reduced
@@ -130,6 +164,12 @@ state with `data-ready` set.
 **Firefox is not assertion-level.** Firefox 157 exposes no CDP endpoint and
 `geckodriver` is not installed, so its coverage is rendered output only. A
 non-blank screenshot is not equivalent to a passing assertion suite.
+
+**Only WebKit is reproducible from this repository.** The WebKit harness is
+committed and its prerequisites are in [deployment.md](./deployment.md); the
+Chromium and Firefox runs were made with ad-hoc scripts that were never committed,
+so re-running either means writing that harness again. Nothing in the release path
+depends on any of the three.
 
 ### Repository hygiene
 
@@ -170,7 +210,10 @@ as private merely because it is disallowed.
 
 ### 5. Push
 
-`main` is level with `origin/main`. Nothing is unpushed.
+`main` is **one commit ahead of `origin/main`**. The Stage 7 release work is
+committed locally as `773cbb0` and has not been pushed. Pushing is a decision for
+the repository owner; nothing in the release path requires it, and a host builds
+from whatever commit it is given.
 
 ---
 

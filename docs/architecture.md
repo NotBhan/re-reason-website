@@ -40,6 +40,7 @@ src/
     ResearchLayout.astro    shell for the research routes
   pages/
     index.astro             the homepage, composed from five sections
+    robots.txt.ts           generated at build time, so its policy follows SITE_URL
     research/
       index.astro           the research index
       [category]/index.astro  generates all three category indexes
@@ -217,12 +218,14 @@ JavaScript payload as built (gzipped):
 
 | Asset | Size | When it loads |
 | --- | --- | --- |
-| `index.html` | ~11 KB | Immediately |
-| CSS | ~5 KB | Immediately |
+| `index.html` | ~12 KB | Immediately |
+| CSS | ~6 KB | Immediately |
 | Anime.js chunk | ~15 KB | Immediately, deferred |
-| React + Motion island | ~115 KB | Only when the island scrolls into view |
+| React + Motion island | ~112 KB | Only when the island scrolls into view |
 
-Initial payload is roughly 31 KB gzipped. If a future section does not need
+Initial payload is roughly 32 KB gzipped — `index.html`, the stylesheet and the
+Anime.js chunk. The homepage references no other script; the island's chunks are
+fetched only when it approaches the viewport. If a future section does not need
 interactivity, it should not increase the last row.
 
 ## Responsive strategy

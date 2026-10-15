@@ -97,21 +97,27 @@ async function expectedRoutes() {
   return [...routes].sort();
 }
 
-/** Directory-shaped HTML routes present in dist. */
+/**
+ * Every HTML route present in dist.
+ *
+ * Directory indexes are the shape this build emits, but a bare `.html` file is a
+ * published URL too: anything dropped into `public/` is copied into the output
+ * verbatim, and a host serves it directly. Collecting only `index.html` made
+ * those invisible — in both modes — which is the one outcome the unexpected-route
+ * check exists to prevent. A stray file is now reported like any other route.
+ */
 async function builtRoutes() {
   const routes = new Set();
-  async function walk(dir) {
-    for (const entry of await readdir(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        await walk(full);
-      } else if (entry.name === 'index.html') {
-        const rel = relative(DIST, dir);
-        routes.add(rel === '' ? '/' : `/${rel.split(sep).join('/')}/`);
-      }
+  for (const file of await htmlFiles(DIST)) {
+    const rel = relative(DIST, file);
+    if (rel === 'index.html') {
+      routes.add('/');
+    } else if (rel.endsWith(`${sep}index.html`)) {
+      routes.add(`/${rel.slice(0, -'index.html'.length).split(sep).join('/')}`);
+    } else {
+      routes.add(`/${rel.split(sep).join('/')}`);
     }
   }
-  await walk(DIST);
   return [...routes].sort();
 }
 
@@ -138,21 +144,53 @@ function canonicalOf(html) {
 }
 
 /**
+ * Stand-in domains, as they appear in free text. Deliberately narrow: this is
+ * applied to prose as well as URLs, and a research site quotes file names, so a
+ * rule broad enough to catch every reserved TLD would flag a path like
+ * `setup.test.ts`. Host-level checking of the build's own origin is done
+ * separately, by `isNonProductionOrigin`.
+ */
+const RESERVED_PLACEHOLDER_DOMAIN =
+  /\b(?:example\.(?:com|org|net|invalid)|your-?domain|foo\.test)\b/i;
+
+/**
+ * Hosts that can never serve the production site.
+ *
+ * RFC 6761 reserves `.test`, `.invalid`, `.example` and `localhost`, and IANA
+ * reserves example.com/org/net for documentation, so none of them is a domain a
+ * real release could be published on. Applied to a parsed hostname rather than to
+ * text, which is why it can be this broad without producing false positives.
+ */
+const NON_PRODUCTION_HOST =
+  /(?:^|\.)(?:test|invalid|example|localhost)$|(?:^|\.)example\.(?:com|org|net)$|^127\.0\.0\.1$|^\[?::1\]?$|(?:^|\.)your-?domain\./i;
+
+function isNonProductionOrigin(origin) {
+  try {
+    return NON_PRODUCTION_HOST.test(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Local and placeholder paths that must never appear in published output.
  *
  * The reserved-domain check is the important one: it is what stops a synthetic
- * origin from being carried into a release. It is applied to the text with any
- * *asserted* origin removed first, so verifying a release candidate with
+ * origin from being carried into a release. It is applied to the text with the
+ * origin under test removed first, so verifying a release candidate with
  * `--origin=https://rc-test.example.invalid` proves the origin was used correctly
- * while still failing on any placeholder nobody asked for. Build a real release
- * without `--origin` and every reserved domain is a failure.
+ * while still failing on any placeholder nobody asked for. A real release is
+ * built without `--origin`, and then no reserved domain is exempt — including the
+ * build's own, which `main()` rejects outright.
  */
 const FORBIDDEN_PATTERNS = [
   ['file:// URL', /file:\/\//],
-  ['absolute filesystem path', /(?:\/home\/|\/Users\/|[A-Z]:\\\\Users)/],
+  // One backslash or two. The obvious `\\\\` in a regex literal means *two*
+  // literal backslashes, so it silently missed the ordinary `C:\Users\…` form.
+  ['absolute filesystem path', /(?:\/home\/|\/Users\/|[A-Z]:[\\/]{1,2}[Uu]sers)/],
   ['development server', /https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?/],
   ['Astro dev port', /:4321\b/],
-  ['reserved placeholder domain', /\b(?:example\.(?:com|org|net|invalid)|your-?domain|foo\.test)\b/i],
+  ['reserved placeholder domain', RESERVED_PLACEHOLDER_DOMAIN],
   ['unfilled placeholder', /\b(?:TODO|FIXME|REPLACE_ME|CHANGEME)\b/],
 ];
 
@@ -273,11 +311,27 @@ async function checkMetadata(files, mode, origin) {
   );
 }
 
+/**
+ * Every text file a visitor downloads, so a placeholder cannot hide in an asset
+ * the HTML scan never opens.
+ *
+ * The built stylesheet is included because a stray `url(https://example.com/…)`
+ * is a runtime dependency on a third party, and an unfilled token in a CSS comment
+ * would ship unexamined. The bundled JavaScript is deliberately NOT scanned: it is
+ * mostly vendor code this repository does not author, and a development-host
+ * literal inside a framework bundle would fail the check for no real reason.
+ */
 async function checkNoPlaceholders(files, origin) {
   const textLike = [...files];
   for (const extra of ['robots.txt', 'sitemap-0.xml', 'sitemap-index.xml']) {
     const p = join(DIST, extra);
     if (existsSync(p)) textLike.push(p);
+  }
+  const cssDir = join(DIST, '_astro');
+  if (existsSync(cssDir)) {
+    for (const entry of await readdir(cssDir)) {
+      if (entry.endsWith('.css')) textLike.push(join(cssDir, entry));
+    }
   }
 
   const hits = new Map();
@@ -299,13 +353,13 @@ async function checkNoPlaceholders(files, origin) {
   if (!hits.size) {
     notes.push(
       origin
-        ? `no placeholder or development URLs beyond the asserted origin (${origin})`
+        ? `no placeholder or development URLs beyond the origin under test (${origin})`
         : 'no placeholder, filesystem or development URLs in the output',
     );
   }
 }
 
-async function checkSitemapAndRobots(mode, built) {
+async function checkSitemapAndRobots(mode, built, origin) {
   const robots = join(DIST, 'robots.txt');
   if (!existsSync(robots)) {
     fail('robots.txt is missing from the build');
@@ -336,10 +390,26 @@ async function checkSitemapAndRobots(mode, built) {
     fail('configured robots.txt still disallows everything');
   }
 
+  /*
+    Every absolute URL this build publishes has to sit on the one origin it was
+    configured with. The canonical and og:url are checked in `checkMetadata`;
+    these two are the same claim for the sitemap and the robots `Sitemap:` line,
+    and were previously only checked for shape, not for which host they name.
+  */
+  const advertised = /^Sitemap:\s*(https?:\/\/\S+)/m.exec(robotsText)?.[1];
+  if (advertised && origin && new URL(advertised).origin !== origin) {
+    fail(`robots.txt advertises a sitemap on a different origin: ${advertised}`);
+  }
+
   if (sitemaps.length) {
     const xml = await readFile(sitemaps.find((f) => f.endsWith('sitemap-0.xml')), 'utf8');
     const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
     if (urls.length !== new Set(urls).size) fail('sitemap contains duplicate URLs');
+
+    if (origin) {
+      const foreign = urls.find((u) => new URL(u).origin !== origin);
+      if (foreign) fail(`sitemap lists a URL on a different origin: ${foreign}`);
+    }
 
     const listed = urls.map((u) => new URL(u).pathname);
     for (const path of listed) {
@@ -494,13 +564,30 @@ async function main() {
     if (canonical) origin = new URL(canonical).origin;
   }
 
+  /*
+    An origin the caller asserted with `--origin` is a test origin, and the
+    placeholder scan exempts it by design. An origin merely *observed* in the
+    output is not the same thing, and treating it as exempt removed the guard this
+    file exists to provide: a build whose canonical, og:url, sitemap and robots
+    line all sit consistently on a host that cannot be production — example.com,
+    or anything under a reserved TLD — would verify clean, because the checker had
+    quietly adopted it as "the origin under test". Nothing asserted it, so refuse.
+  */
+  if (!ORIGIN_ARG && origin && isNonProductionOrigin(origin)) {
+    fail(
+      `the build is published on a non-production origin: ${origin}\n` +
+        `      Re-run with --origin=${origin} if this is a test-origin build, or rebuild ` +
+        `with the real SITE_URL.`,
+    );
+  }
+
   console.log(`\n  verify-release: ${DIST_REL}  [${mode}${origin ? `, ${origin}` : ''}]\n`);
 
   const built = await checkRoutes();
   await checkInternalLinks(files);
   await checkMetadata(files, mode, origin);
   await checkNoPlaceholders(files, origin);
-  await checkSitemapAndRobots(mode, built);
+  await checkSitemapAndRobots(mode, built, origin);
   await checkAssets();
   await checkFigureIntegrity();
   await checkNoDevelopmentFiles();

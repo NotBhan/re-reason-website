@@ -17,6 +17,7 @@ npm run build        # production build into dist/
 npm run preview      # serve the production build locally
 npm run check        # astro check: type and template diagnostics
 npm run typecheck    # alias for npm run check
+npm run verify:release  # audit the build in dist/ before handing it to a host
 ```
 
 > `NODE_ENV` note: `astro check` and the Tailwind Vite plugin are
@@ -40,7 +41,7 @@ React 19 (one island) · Motion for React (`motion/react`) · Anime.js 4 · CSS.
 | D | Evidence | Measured results and open questions | Motion for React island |
 | E | Access | The public record | CSS hover and focus |
 
-**Research pages** (`/research/`) — twelve routes in total:
+**Research pages** (`/research/`) — eleven routes, seven of them detail pages:
 
 ```
 /research/                                 the editorial index
