@@ -16,12 +16,14 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 interface Props {
   title: string;
   description: string;
+  /** Research documents are articles; the indexes that list them are not. */
+  ogType?: 'website' | 'article';
 }
 
-const { title, description } = Astro.props;
+const { title, description, ogType = 'website' } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} ogType={ogType}>
   <Header />
 
   <main id="main" class="shell pt-12 pb-[var(--section-block)] sm:pt-16">

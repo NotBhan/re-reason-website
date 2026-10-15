@@ -15,6 +15,25 @@ export const SITE = {
 } as const;
 
 /**
+ * Social preview asset.
+ *
+ * The image itself is generated from `assets/og-source.html` by
+ * `scripts/build-og-image.mjs`, so the wordmark, the colours and the type are the
+ * site's own rather than a screenshot of a page. It asserts no result: it carries
+ * the name and the same framing sentence the site already publishes.
+ *
+ * `path` is relative on purpose. The absolute URL is built in `BaseLayout` from
+ * the configured origin, and omitted entirely when none is configured — a
+ * relative path is not a valid Open Graph URL and is never presented as one.
+ */
+export const OG_IMAGE = {
+  path: '/og.png',
+  width: 1200,
+  height: 630,
+  alt: 'The RE:REASON wordmark and framing line on a near-black field, with a small signal-orange cell grid.',
+} as const;
+
+/**
  * Outbound destinations.
  *
  * Every entry below was verified to resolve (HTTP 200) before being added, and

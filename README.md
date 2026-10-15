@@ -70,12 +70,26 @@ src/components/ui/           reused primitives
 scripts/                     font and figure tooling (run by hand, not at build time)
                              webkit-check.py drives WebKitGTK for browser verification
 docs/                        architecture, typography, content model, figures,
-                             motion, release readiness
+                             motion, deployment, release readiness
 ```
 
 [`docs/release-checklist.md`](docs/release-checklist.md) records what is verified
-and what is still waiting on a decision — chiefly the production domain, which
-nothing in the repository invents.
+and what is still waiting on a decision. [`docs/deployment.md`](docs/deployment.md)
+describes the build and the host contract.
+
+## Releasing
+
+The production domain is not chosen, so nothing in the repository invents one.
+Supply it at build time:
+
+```bash
+SITE_URL=https://<domain> npm run build
+```
+
+Without `SITE_URL` the build still succeeds and stays domain-agnostic: no
+canonical URLs, no absolute Open Graph URLs, no sitemap, and a `robots.txt` that
+disallows crawling. Nothing is fabricated in either mode — see
+[deployment.md](docs/deployment.md).
 
 ## Before changing anything
 

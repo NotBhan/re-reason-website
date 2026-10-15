@@ -71,6 +71,7 @@ src/
     ui/                     reused primitives
   lib/
     site.ts                 metadata, sections, verified outbound URLs
+    site-url.ts             SITE_URL resolution, canonical URL construction
     research.ts             collection helpers, related-reference validation
     figures.ts              PNG header reader, for intrinsic figure sizes
   styles/
@@ -79,7 +80,9 @@ src/
   env.d.ts                  astro/client type reference
 public/
   fonts/                    self-hosted webfonts + SOURCES.json
+  fonts/licenses/           SIL OFL text for every family shipped
   figures/                  published research figures + SOURCES.json
+  og.png                    social preview card (generated, committed)
   favicon.svg
 scripts/
   fetch-fonts.mjs           downloads the webfonts
@@ -254,20 +257,38 @@ Mobile is composed, not scaled.
 
 ## Decisions left open
 
-- **Display and reading typefaces.** System stacks are a placeholder. Licensing
-  and pairing still need to be chosen; the slots exist for it.
-- **Site URL and metadata.** `astro.config.mjs` has no `site`, and there are no
-  Open Graph or canonical tags, because the domain is unknown. Add them together
-  with a `site` value.
-- **`robots.txt` and a sitemap**, which depend on the same domain.
-- **Research pages.** The homepage is the only route. Deeper pages (per-experiment,
-  per-phase) would want the content collections already anticipated by
-  `src/content/`.
-- **Figures.** The research repository ships real plots under
-  `docs/reports/figures/`. None are used here yet; several would strengthen the
-  evidence section once licensing and framing are agreed.
+Kept current — entries are removed once settled rather than left to drift.
+
+- **The production domain.** The last outstanding metadata decision. The
+  mechanism is finished: `SITE_URL` drives `site`, and canonical URLs, absolute
+  Open Graph URLs and the sitemap are all derived from it. Until it is supplied,
+  those are omitted rather than faked. See [deployment.md](./deployment.md).
+- **Trailing-slash policy.** Recorded as `TRAILING_SLASH = 'always'` in
+  `src/lib/site-url.ts`, matching the emitted file layout. Provisional until a
+  host is chosen, because it is only wrong if the host rewrites `/x/` to `/x`.
+- **A 404 page.** Unknown paths are left to the host. A branded 404 would need
+  design input and is not a release blocker.
 - **Scroll-linked sequences.** Anime.js supports scroll observers and Motion
   offers `useScroll`. Neither is used. Any addition must not hijack scrolling.
-- **A shared `Section` layout.** All five sections repeat the same eyebrow /
-  heading / two-column frame. It is duplicated on purpose for now, because each
+- **A shared `Section` layout.** The homepage sections repeat the same eyebrow /
+  heading / two-column frame. It is duplicated on purpose, because each
   diverges; extract it once the pattern is settled.
+- **A Playwright or CDP harness for Firefox.** Firefox 157 exposes no CDP
+  endpoint, so its coverage is rendered-output only while Chromium and WebKit
+  assert. A WebDriver BiDi harness would close that gap if it is worth the
+  dependency.
+
+### Settled
+
+Recorded here so they are not reopened by accident:
+
+- **Typefaces.** Archivo / Source Serif 4 / JetBrains Mono, self-hosted, plus a
+  Noto Sans Math subset for the operators the text faces lack.
+  [typography.md](./typography.md) has the evidence.
+- **Research routes and collections.** Three collections — experiments,
+  architectures, phases — over eleven research routes.
+- **Figures.** Six of eight published, with provenance and hashes. The other two
+  are withheld pending research reconciliation; [figures.md](./figures.md) has
+  the handoff.
+- **Site URL mechanism, canonical metadata, `robots.txt` and the sitemap.** All
+  implemented and conditional on configuration.

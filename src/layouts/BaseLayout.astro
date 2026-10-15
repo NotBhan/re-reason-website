@@ -1,13 +1,28 @@
 ---
 import '@/styles/global.css';
-import { SITE } from '@/lib/site';
+import { OG_IMAGE, SITE } from '@/lib/site';
+import { canonicalPath, TRAILING_SLASH } from '@/lib/site-url';
 
 interface Props {
   title?: string;
   description?: string;
+  /** `article` for research documents, `website` for indexes and the homepage. */
+  ogType?: 'website' | 'article';
 }
 
-const { title = SITE.title, description = SITE.description } = Astro.props;
+const { title = SITE.title, description = SITE.description, ogType = 'website' } = Astro.props;
+
+/*
+  Production origin, resolved once in astro.config.mjs from SITE_URL.
+
+  `Astro.site` is undefined when no origin was configured. Everything absolute
+  below is conditional on it: a canonical link or an og:image pointing at a
+  placeholder origin would be worse than their absence, because broken metadata
+  claims to be correct while missing metadata is merely incomplete.
+*/
+const origin = Astro.site;
+const canonical = origin ? new URL(canonicalPath(Astro.url.pathname, TRAILING_SLASH), origin) : null;
+const ogImage = origin && canonical ? new URL(OG_IMAGE.path, origin) : null;
 ---
 
 <!doctype html>
@@ -19,8 +34,39 @@ const { title = SITE.title, description = SITE.description } = Astro.props;
     <meta name="theme-color" content="#090A0C" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+
     <title>{title}</title>
     <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical.href} />}
+
+    {/*
+      Open Graph and Twitter cards. The fields that do not need an absolute URL
+      are always emitted; the ones that do are emitted only when an origin is
+      configured. `twitter:card` follows suit — asking for a large-image card
+      without an image would render worse than the summary card.
+    */}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical.href} />}
+    {ogImage && <meta property="og:image" content={ogImage.href} />}
+    {ogImage && <meta property="og:image:type" content="image/png" />}
+    {ogImage && <meta property="og:image:width" content={String(OG_IMAGE.width)} />}
+    {ogImage && <meta property="og:image:height" content={String(OG_IMAGE.height)} />}
+    {ogImage && <meta property="og:image:alt" content={OG_IMAGE.alt} />}
+
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage.href} />}
+    {ogImage && <meta name="twitter:image:alt" content={OG_IMAGE.alt} />}
+
+    {/*
+      No per-page robots meta: crawling policy is set once in robots.txt, which
+      can see the build's configuration and a page cannot. Nothing here is
+      noindex — see docs/deployment.md.
+    */}
 
     {/*
       Progressive-enhancement boot flag — the single mechanism that lets the
