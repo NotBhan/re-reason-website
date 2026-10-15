@@ -1,0 +1,333 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   RE:REASON — art direction tokens
+   ---------------------------------------------------------------------------
+   The single place where colour, type, spacing and surface decisions live.
+   Components read from these tokens and never hard-code a hex value or a size
+   of their own, so the whole site can be re-art-directed from this file.
+
+   Design language, in one paragraph: a near-black research instrument. Oversized
+   editorial display type against very small tracked technical labels; hairline
+   rules and registration marks instead of cards and shadows; one warm signal
+   colour used sparingly; negative space treated as the primary material.
+
+   Contrast notes (against --color-ink #090A0C), measured, not assumed:
+     bone   #F5F3EE   ~18.9:1   body and headings
+     ash    #9A9A94    ~6.6:1   secondary prose
+     ash-dim#82827B    ~5.0:1   quietest text tone that still passes AA
+     signal #FF6938    ~6.9:1   accent text; ink on a signal fill is 6.9:1
+     control#5C606A    ~3.15:1  interactive control boundaries (WCAG 1.4.11)
+   bone on a signal fill is ~2.6:1 and must never be used.
+   =========================================================================== */
+
+/* --- Tailwind theme tokens ------------------------------------------------
+   Only Tailwind v4 namespace tokens live in `@theme`, because that is what
+   generates utilities (`bg-ink`, `text-signal`, `text-mega`, ...).
+--------------------------------------------------------------------------- */
+@theme {
+  /* Surfaces */
+  --color-ink: #090a0c; /* near-black page background */
+  --color-surface: #18191c; /* secondary dark surface (panels) */
+  --color-surface-hi: #202226; /* raised surface, hover state */
+
+  /* Text */
+  --color-bone: #f5f3ee; /* primary text — warm off-white */
+  --color-ash: #9a9a94; /* secondary text */
+  --color-ash-dim: #82827b; /* tertiary text, still AA on ink */
+
+  /* Accent — one only */
+  --color-signal: #ff6938; /* signal orange */
+  --color-signal-deep: #cf4a1e; /* pressed / hover fill */
+
+  /* Borders */
+  --color-line: #1f2126; /* decorative hairline on ink */
+  --color-line-hi: #34373e; /* panel and surface boundary */
+  --color-control: #5c606a; /* interactive boundary — meets 3:1 */
+
+  /* Data marks. Deliberately quieter than --color-ash-dim so a marked cell
+     reads as a filled slot without competing with the text around it. */
+  --color-cell: #64645e;
+
+  /* ---------------------------------------------------------------------
+     Modular type families.
+     Three independent slots. Each can be replaced on its own without
+     touching the others, which is the whole point of the split:
+
+       1. Add an `@font-face` (self-hosted) or a licensed `<link>` in
+          BaseLayout.astro.
+       2. Repoint the slot below. Nothing else changes.
+
+       --font-display   headlines, the wordmark, section numbering.
+                        Currently a neo-grotesque system stack.
+       --font-reading   prose and long-form copy. Deliberately separate from
+                        display so a reading face can be swapped in later
+                        without disturbing the headlines.
+       --font-mono      technical labels, metrics, register values, sources.
+     Do not download fonts ad hoc; a display face is a licensing decision.
+     --------------------------------------------------------------------- */
+  --font-system-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-system-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --font-display: var(--font-system-sans);
+  --font-reading: var(--font-system-sans);
+  --font-mono: var(--font-system-mono);
+
+  /* ---------------------------------------------------------------------
+     Editorial type scale — 11px technical label to 104px display.
+     Fluid clamps move continuously instead of stepping at breakpoints.
+     --------------------------------------------------------------------- */
+  --text-eyebrow: 0.6875rem; /* 11px */
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.16em;
+
+  --text-label: 0.75rem; /* 12px — monospace technical labels */
+  --text-label--line-height: 1.35;
+  --text-label--letter-spacing: 0.08em;
+
+  --text-caption: 0.8125rem; /* 13px */
+  --text-caption--line-height: 1.6;
+  --text-caption--letter-spacing: 0.01em;
+
+  --text-body: 1rem; /* 16px */
+  --text-body--line-height: 1.68;
+
+  --text-lead: clamp(1.0625rem, 0.95rem + 0.45vw, 1.3125rem); /* 17 → 21px */
+  --text-lead--line-height: 1.5;
+  --text-lead--letter-spacing: -0.005em;
+
+  --text-title: clamp(1.5rem, 1.1rem + 1.7vw, 2.75rem); /* 24 → 44px */
+  --text-title--line-height: 1.12;
+  --text-title--letter-spacing: -0.015em;
+
+  --text-display: clamp(2.25rem, 1.4rem + 3.4vw, 4.5rem); /* 36 → 72px */
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.025em;
+
+  --text-mega: clamp(2.75rem, 1.2rem + 6.5vw, 6.5rem); /* 44 → 104px */
+  --text-mega--line-height: 0.94;
+  --text-mega--letter-spacing: -0.035em;
+
+  /* Layout */
+  --container-shell: 80rem;
+}
+
+/* --- Layout rhythm and non-namespace tokens ------------------------------
+   Plain custom properties: no Tailwind namespace, so no utilities generated.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: dark;
+
+  /* Page gutter, matched to the shell container. */
+  --shell-gutter: clamp(1.25rem, 4vw, 3.5rem);
+
+  /* Vertical rhythm between major sections — generous, for editorial pacing. */
+  --section-block: clamp(5rem, 2.5rem + 9vw, 11rem);
+
+  /* Minimum comfortable hit area for interactive elements. */
+  --hit-area: 2.75rem;
+
+  /* Tracking for the tracked-uppercase technical label system. */
+  --tracking-label: 0.16em;
+
+  /* Colour-mix helpers. */
+  --signal-hairline: color-mix(in srgb, var(--color-signal) 45%, transparent);
+  --signal-wash: color-mix(in srgb, var(--color-signal) 10%, transparent);
+  --selection: color-mix(in srgb, var(--color-signal) 32%, transparent);
+}
+
+/* --- Baseline ------------------------------------------------------------
+   Tailwind's preflight already handles the reset (box-sizing, margins,
+   media element sizing). Only what it does not cover is added here.
+--------------------------------------------------------------------------- */
+@layer base {
+  html {
+    background-color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-reading);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Display type is a different family slot from reading type. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  ::selection {
+    background-color: var(--selection);
+    color: var(--color-bone);
+  }
+
+  /* Single focus treatment for the whole site. Every interactive element gets
+     a visible, high-contrast ring for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Anchor targets must clear the sticky header when jumped to. */
+  :where([id]) {
+    scroll-margin-top: 5.5rem;
+  }
+
+  button,
+  [type='button'] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Numerals in metrics and register readouts must not shift. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Smooth scrolling is a motion effect, so it is opt-in. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+/* --- Layout utilities ----------------------------------------------------- */
+
+@utility shell {
+  width: 100%;
+  max-width: var(--container-shell);
+  margin-inline: auto;
+  padding-inline: var(--shell-gutter);
+}
+
+@utility section-pad {
+  padding-block: var(--section-block);
+}
+
+/* Caps line length for readable prose without counting characters by hand. */
+@utility measure {
+  max-width: 46ch;
+}
+
+@utility measure-tight {
+  max-width: 34ch;
+}
+
+@utility measure-wide {
+  max-width: 62ch;
+}
+
+/* The tracked-uppercase technical label used for section numbers, eyebrow
+   labels, metric names and legends. Colour is left to the caller. */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: 1.35;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* Monospace, but without the uppercase transform. Use this for anything whose
+   exact spelling carries meaning — file paths, identifiers, formulas — because
+   upper-casing a path misrepresents it. */
+@utility mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* Hairline rule used between editorial blocks. */
+@utility rule {
+  border-top: 1px solid var(--color-line);
+}
+
+/* ===========================================================================
+   Progressive-enhancement reveal
+   ---------------------------------------------------------------------------
+   `BaseLayout` sets data-anim="on" on <html> from a small inline head script,
+   but only as a *promise*: if the animation modules do not report readiness in
+   time, the attribute is removed again and the content stays visible.
+
+   Consequence: with JavaScript disabled the attribute is never set, so every
+   [data-reveal] element renders normally. Pre-hiding only ever happens when we
+   have already confirmed that script can run, which is what removes the flash
+   between first paint and the start of an animation timeline.
+
+   Rule: any element carrying data-reveal must be animated by the component
+   that hides it. Never pre-hide the hero headline — it is the largest
+   contentful paint and must render immediately.
+   =========================================================================== */
+[data-anim='on'] [data-reveal] {
+  opacity: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   CSS-owned staggered entrance.
+   Same gate as above, but the entrance itself is a CSS animation rather than a
+   scripted timeline: a short staggered rise, driven by --enter-delay, costs no
+   JavaScript and cannot hold up rendering. Used by the hero.
+
+   The headline deliberately does NOT use this. It is the largest contentful
+   paint, so it renders on the first frame and the sequence starts around it.
+   Elements are opt-in by value, which keeps the anime.js layer's
+   `data-reveal="node"` etc. untouched.
+--------------------------------------------------------------------------- */
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-anim='on'] [data-reveal='enter'] {
+  animation: enter-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+/* ===========================================================================
+   Reduced motion
+   ---------------------------------------------------------------------------
+   Three layers of defence:
+   1. A surgical rule that cancels the pre-hidden reveal state - content is
+      visible immediately, before any script decides what to do.
+   2. A blunt global guard so CSS transitions and keyframe effects (including
+      anything added later by another author) collapse to a single instant
+      frame. Motion for React and Anime.js are opted out separately in script,
+      where they can check the same media query.
+   3. `[data-motion]` marks an element whose CSS animation is purely ambient.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  [data-anim='on'] [data-reveal] {
+    opacity: 1;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,83 @@
+---
+import { PREMISE } from '@/content/home';
+import { repoBlob } from '@/lib/site';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import ExternalLink from '@/components/ui/ExternalLink.astro';
+
+// ===========================================================================
+// SECTION B — the research premise
+// ---------------------------------------------------------------------------
+// Animation ownership: none. This section is static. It is read, not watched.
+// ===========================================================================
+---
+
+<section id="premise" class="border-t border-line">
+  <div class="shell section-pad">
+    <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
+      <div class="lg:col-span-5">
+        <Eyebrow number="01" label={PREMISE.eyebrow} />
+        <h2 class="mt-8 text-display text-balance">{PREMISE.heading}</h2>
+        <p class="mt-8 measure text-body text-ash">{PREMISE.intro}</p>
+      </div>
+
+      <ol class="lg:col-span-6 lg:col-start-7">
+        {
+          PREMISE.items.map((item) => (
+            <li class="grid grid-cols-[auto_1fr] gap-x-6 border-t border-line py-7 last:border-b last:border-line sm:gap-x-10">
+              <span class="label tabular text-signal">{item.number}</span>
+              <div>
+                <h3 class="font-display text-lead font-medium text-bone">{item.title}</h3>
+                <p class="mt-3 measure text-body text-ash">{item.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <figure class="mt-24 border-t border-line pt-12 sm:mt-32">
+      <Eyebrow label={PREMISE.hypothesisLabel} />
+      <blockquote class="mt-8">
+        <p class="measure-wide font-display text-title font-light text-balance text-bone">
+          {PREMISE.hypothesis}
+        </p>
+      </blockquote>
+      <figcaption class="mt-6">
+        <ExternalLink
+          href={repoBlob(PREMISE.hypothesisSource.path)}
+          class="mono text-ash-dim transition-colors duration-200 ease-out hover:text-bone"
+        >
+          {PREMISE.hypothesisSource.label}
+        </ExternalLink>
+      </figcaption>
+    </figure>
+
+    <p class="mt-20 font-display text-display text-signal sm:mt-28">{PREMISE.disclaimerLead}</p>
+    <p class="mt-6 measure text-lead text-ash">{PREMISE.disclaimerBody}</p>
+
+    <div class="mt-24 border-t border-line pt-8 sm:mt-32">
+      <ol class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {
+          PREMISE.cycle.map((step, index) => (
+            <li class="flex items-center gap-3">
+              <span
+                class:list={[
+                  'label',
+                  step === PREMISE.cycleAccent ? 'text-signal' : 'text-ash',
+                ]}
+              >
+                {step}
+              </span>
+              {index < PREMISE.cycle.length - 1 && (
+                <span class="label text-ash-dim" aria-hidden="true">
+                  &rarr;
+                </span>
+              )}
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-5 measure-wide text-caption text-ash-dim">{PREMISE.cycleCaption}</p>
+    </div>
+  </div>
+</section>

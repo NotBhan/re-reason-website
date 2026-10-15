@@ -1,0 +1,15 @@
+---
+interface Props {
+  /** Section number, e.g. "02". Omitted where the label is not numbered. */
+  number?: string;
+  label: string;
+}
+
+const { number, label } = Astro.props;
+---
+
+<p class="flex items-center gap-3">
+  <span class="size-1.5 shrink-0 bg-signal" aria-hidden="true"></span>
+  {number && <span class="label tabular text-ash-dim">{number}</span>}
+  <span class="label text-bone">{label}</span>
+</p>

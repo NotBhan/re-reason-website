@@ -1,0 +1,53 @@
+---
+import { FOOTER } from '@/content/home';
+import { SECTIONS } from '@/lib/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer id="colophon" class="border-t border-line">
+  <div class="shell section-pad">
+    <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
+      <div class="lg:col-span-6">
+        <p class="font-display text-title">
+          RE<span class="text-signal">:</span>REASON
+        </p>
+        <p class="measure mt-5 text-body text-ash">{FOOTER.tagline}</p>
+      </div>
+
+      <nav aria-label="Sections, repeated" class="lg:col-span-4 lg:col-start-9">
+        <ol class="grid gap-3">
+          {
+            SECTIONS.map((section) => (
+              <li>
+                <a
+                  href={`#${section.id}`}
+                  class="label text-ash-dim transition-colors duration-200 ease-out hover:text-bone"
+                >
+                  <span class="tabular mr-3">{section.number}</span>
+                  {section.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+    </div>
+
+    <div
+      class="mt-16 flex flex-col gap-6 border-t border-line pt-6 sm:flex-row sm:items-start sm:justify-between"
+    >
+      <div class="flex flex-col gap-2">
+        <p class="label text-ash-dim">&copy; {year} RE:REASON &middot; MIT licensed</p>
+        <p class="measure-wide text-caption text-ash-dim">{FOOTER.note}</p>
+      </div>
+
+      <a
+        href="#top"
+        class="label shrink-0 self-start text-ash transition-colors duration-200 ease-out hover:text-bone"
+      >
+        {FOOTER.backToTop} <span aria-hidden="true">&uarr;</span>
+      </a>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,19 @@
+---
+// Outbound link. Opens in a new tab and says so to assistive technology,
+// because the site is a presentation layer and the repository is the record —
+// visitors should not lose their place.
+interface Props {
+  href: string;
+  class?: string;
+  /** Set false for links that already carry their own directional marker. */
+  cue?: boolean;
+}
+
+const { href, class: className, cue = true } = Astro.props;
+---
+
+<a href={href} target="_blank" rel="noopener noreferrer" class={className}>
+  <slot />
+  {cue && <span class="ml-1.5 inline-block" aria-hidden="true">&nearr;</span>}
+  <span class="sr-only"> (opens in a new tab)</span>
+</a>

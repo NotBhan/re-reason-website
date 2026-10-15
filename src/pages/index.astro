@@ -1,0 +1,42 @@
+---
+import Access from '@/components/sections/Access.astro';
+import Evidence from '@/components/sections/Evidence.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Premise from '@/components/sections/Premise.astro';
+import Structure from '@/components/sections/Structure.astro';
+import Footer from '@/components/layout/Footer.astro';
+import Header from '@/components/layout/Header.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+// Homepage — a visual narrative in five parts.
+//
+//   A  Hero       the identity, the primary action, the active architecture
+//   B  Premise    why the project exists, and what it refuses to claim
+//   C  Structure  the state update, rendered as a diagram (Anime.js)
+//   D  Evidence   measured results and open questions (Motion for React island)
+//   E  Access     the public record
+//
+// Animation ownership, by section:
+//   A  CSS only (staggered entrance) — no script, nothing blocks first paint
+//   B  none — static
+//   C  Anime.js — one timeline, lazily started on approach
+//   D  Motion for React — one island; the metrics above it are static
+//   E  CSS only — hover and focus
+//
+// Every technical claim on the page is sourced from the research repository.
+// See src/content/home.ts.
+---
+
+<BaseLayout>
+  <Header />
+
+  <main>
+    <Hero />
+    <Premise />
+    <Structure />
+    <Evidence />
+    <Access />
+  </main>
+
+  <Footer />
+</BaseLayout>

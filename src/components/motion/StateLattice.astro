@@ -1,0 +1,364 @@
+---
+// ===========================================================================
+// ANIME.JS LAYER — cinematic, timeline-driven sequence
+// ---------------------------------------------------------------------------
+// Anime.js owns, and is the only owner of, in this component:
+//   • opacity on .lattice-rule, .lattice-label and .lattice-cell--move
+//   • opacity on .lattice-marker
+//   • scale   on .lattice-cell--move
+//
+// CSS owns the cell *fill*, including the end-state accent, which is triggered
+// by the data-ready attribute this timeline sets when it finishes. Different
+// property, different owner, explicit handover — see docs/motion-guidelines.md.
+//
+// The sequence: rules and axis labels resolve, then the ten steps resolve left
+// to right one column at a time with a marker tracking the current step. The
+// final marker stays lit and the writes at the last step turn accent. One pass
+// that settles; nothing loops.
+//
+// Only the *written* cells are pre-hidden. The held cells are the grid itself
+// and are present from the first frame, so the grid never pops in.
+// ===========================================================================
+import { STRUCTURE } from '@/content/home';
+
+const { steps: STEPS, coordinates: ROWS, title, description, disclaimer } = STRUCTURE.diagram;
+
+const CELL_W = 34;
+const CELL_H = 24;
+const GAP = 6;
+const X0 = 42; // gutter for the coordinate labels
+const Y0 = 34; // gutter for the step labels and the marker
+const WIDTH = X0 + STEPS * (CELL_W + GAP) - GAP + 6;
+const HEIGHT = Y0 + ROWS * (CELL_H + GAP) - GAP + 6;
+
+const colX = (step: number) => X0 + step * (CELL_W + GAP);
+const rowY = (row: number) => Y0 + row * (CELL_H + GAP);
+
+/**
+ * A rendering of the update rule, not logged experimental data.
+ *
+ * 1 = the gate for that coordinate moved the state toward the candidate at that
+ * step; 0 = the coordinate held its previous value. Hand-authored so the
+ * pattern stays stable and reviewable rather than being generated at runtime.
+ */
+const PATTERN: Array<Array<0 | 1>> = [
+  [1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+  [0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+  [1, 0, 0, 1, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+  [0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+  [1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+  [0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+  [0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+];
+
+interface Cell {
+  row: number;
+  step: number;
+  filled: boolean;
+}
+
+/** Flat cell list — Astro renders flat arrays cleanly, nested ones do not. */
+const CELLS: Array<Cell> = PATTERN.flatMap((row, rowIndex) =>
+  row.map((filled, step) => ({ row: rowIndex, step, filled: filled === 1 })),
+);
+
+const STEPS_LIST = Array.from({ length: STEPS }, (_, index) => index);
+const ROWS_LIST = Array.from({ length: ROWS }, (_, index) => index);
+const LAST_STEP = STEPS - 1;
+---
+
+<div data-lattice>
+  <div class="rounded-panel border border-line bg-surface p-4 sm:p-6">
+    <svg
+      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      class="h-auto w-full"
+      role="img"
+      aria-labelledby="lattice-title"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title id="lattice-title">{title}</title>
+      <desc>{description}</desc>
+
+      <g data-reveal="rule">
+        <line class="lattice-rule" x1="0" y1="6" x2={WIDTH} y2="6"></line>
+        <line class="lattice-rule" x1="0" y1={Y0 - 18} x2={WIDTH} y2={Y0 - 18}></line>
+      </g>
+
+      <g data-reveal="label">
+        {
+          STEPS_LIST.map((step) => (
+            <text class="lattice-label" x={colX(step) + CELL_W / 2} y={20} text-anchor="middle">
+              {step}
+            </text>
+          ))
+        }
+        {
+          ROWS_LIST.map((row) => (
+            <text
+              class="lattice-label"
+              x="0"
+              y={rowY(row) + CELL_H / 2}
+              dominant-baseline="central"
+            >
+              c{row}
+            </text>
+          ))
+        }
+      </g>
+
+      {
+        /* Held cells are structure, not data: always present, never animated. */
+        CELLS.filter((cell) => !cell.filled).map((cell) => (
+          <rect
+            class="lattice-cell"
+            x={colX(cell.step)}
+            y={rowY(cell.row)}
+            width={CELL_W}
+            height={CELL_H}
+          />
+        ))
+      }
+
+      {
+        CELLS.filter((cell) => cell.filled).map((cell) => (
+          <rect
+            data-reveal="cell"
+            data-step={cell.step}
+            class:list={[
+              'lattice-cell',
+              'lattice-cell--move',
+              cell.step === LAST_STEP && 'lattice-cell--final',
+            ]}
+            x={colX(cell.step)}
+            y={rowY(cell.row)}
+            width={CELL_W}
+            height={CELL_H}
+          />
+        ))
+      }
+
+      {
+        /* One marker per step; they cross-fade. Not content, so not revealed
+           by the failsafe — CSS keeps them hidden until the timeline runs. */
+        STEPS_LIST.map((step) => (
+          <rect
+            data-lattice-marker
+            class="lattice-marker"
+            x={colX(step)}
+            y={Y0 - 12}
+            width={CELL_W}
+            height="2"
+          />
+        ))
+      }
+    </svg>
+  </div>
+
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+    <p class="label text-ash-dim">{disclaimer}</p>
+    <button
+      type="button"
+      data-lattice-replay
+      class="label border border-control px-3 py-2 text-ash transition-colors duration-200 ease-out hover:border-signal hover:text-bone"
+    >
+      {STRUCTURE.replayLabel}
+    </button>
+  </div>
+</div>
+
+<style>
+  .lattice-rule {
+    fill: none;
+    stroke: var(--color-line-hi);
+    stroke-width: 1;
+  }
+
+  .lattice-label {
+    fill: var(--color-ash-dim);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .lattice-cell {
+    fill: none;
+    stroke: var(--color-line-hi);
+    stroke-width: 1;
+  }
+
+  .lattice-cell--move {
+    fill: var(--color-cell);
+    stroke: var(--color-cell);
+  }
+
+  .lattice-marker {
+    fill: var(--color-signal);
+    opacity: 0;
+  }
+
+  /* Scale needs an explicit reference box on SVG geometry, otherwise it
+     resolves against the viewport origin and the cells fly apart. */
+  .lattice-cell--move {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /*
+    CSS-owned end state. The timeline sets data-ready when it finishes; CSS then
+    recolours the writes committed at the final step. Anime.js never touches
+    fill, so there is no contested property.
+  */
+  .lattice-cell--final {
+    transition:
+      fill 420ms ease-out,
+      stroke 420ms ease-out;
+  }
+
+  [data-ready='true'] .lattice-cell--final {
+    fill: var(--color-signal);
+    stroke: var(--color-signal);
+  }
+
+  /*
+    When no sequence is running there is no handover to wait for, so the accent
+    must already be present. `data-anim` is only ever set by the boot script, so
+    its absence means either JavaScript is off or the user prefers reduced
+    motion — in both cases the diagram is shown in its finished state.
+  */
+  :global(html:not([data-anim='on'])) .lattice-cell--final {
+    fill: var(--color-signal);
+    stroke: var(--color-signal);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lattice-cell--final {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import { createTimeline, stagger } from 'animejs';
+
+  const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+
+  /** Milliseconds between one step resolving and the next. */
+  const STEP_INTERVAL = 130;
+  /** When the first step begins, after the frame has resolved. */
+  const STEP_START = 460;
+
+  function selectAll<T extends Element>(root: HTMLElement, selector: string): Array<T> {
+    return Array.from(root.querySelectorAll<T>(selector));
+  }
+
+  function startLattice(root: HTMLElement): void {
+    const documentRoot = document.documentElement;
+    const replay = document.querySelector<HTMLButtonElement>('[data-lattice-replay]');
+
+    const rules = selectAll<SVGElement>(root, '[data-reveal="rule"]');
+    const labels = selectAll<SVGElement>(root, '[data-reveal="label"]');
+    const moveCells = selectAll<SVGElement>(root, '[data-reveal="cell"]');
+    const markers = selectAll<SVGElement>(root, '[data-lattice-marker]');
+
+    if (!moveCells.length) return;
+
+    // Disarm the boot failsafe: animation code has loaded and taken ownership
+    // of the pre-hidden cells.
+    documentRoot.setAttribute('data-anim-ready', 'true');
+
+    // Group written cells by step so each column resolves as one beat.
+    const byStep = new Map<number, Array<SVGElement>>();
+    for (const cell of moveCells) {
+      const step = Number(cell.getAttribute('data-step'));
+      const column = byStep.get(step) ?? [];
+      column.push(cell);
+      byStep.set(step, column);
+    }
+
+    const lastStep = Math.max(...byStep.keys());
+
+    const timeline = createTimeline({
+      autoplay: false,
+      defaults: { ease: 'outExpo', duration: 520 },
+    })
+      .add(rules, { opacity: [0, 1], duration: 420, ease: 'outQuad' }, 0)
+      .add(labels, { opacity: [0, 1], duration: 360, delay: stagger(12), ease: 'outQuad' }, 120);
+
+    for (let step = 0; step <= lastStep; step += 1) {
+      const at = STEP_START + step * STEP_INTERVAL;
+      const column = byStep.get(step);
+
+      if (column && column.length) {
+        timeline.add(
+          column,
+          { opacity: [0, 1], scale: [0.6, 1], duration: 420, delay: stagger(30), ease: 'outBack' },
+          at,
+        );
+      }
+
+      const marker = markers[step];
+      if (marker) {
+        timeline.add(marker, { opacity: [0, 1], duration: 150, ease: 'outQuad' }, at);
+        if (step < lastStep) {
+          timeline.add(marker, { opacity: [1, 0], duration: 150, ease: 'outQuad' }, at + STEP_INTERVAL);
+        }
+      }
+    }
+
+    const settle = STEP_START + lastStep * STEP_INTERVAL + 540;
+
+    timeline.call(() => {
+      // Hand the accent to CSS. This attribute is the only thing the script
+      // writes at the end; the fill itself belongs to the stylesheet.
+      root.setAttribute('data-ready', 'true');
+    }, settle);
+
+    const restart = (): void => {
+      root.removeAttribute('data-ready');
+      timeline.restart();
+    };
+
+    replay?.addEventListener('click', restart);
+
+    let observer: IntersectionObserver | undefined;
+
+    if (documentRoot.getAttribute('data-anim') === 'on') {
+      // The lattice is below the fold on most viewports, so it is started on
+      // approach rather than on load.
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          observer?.disconnect();
+          timeline.play();
+        },
+        { rootMargin: '0px 0px -15% 0px' },
+      );
+      observer.observe(root);
+    } else {
+      // The boot failsafe already revealed the cells because this module
+      // arrived late. Adopt the finished state instead of re-hiding content.
+      root.setAttribute('data-ready', 'true');
+    }
+
+    // Dev-only teardown, so hot reloads do not stack timelines on the same
+    // elements. Stripped from production builds.
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => {
+        observer?.disconnect();
+        replay?.removeEventListener('click', restart);
+        timeline.revert();
+        root.removeAttribute('data-ready');
+      });
+    }
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-lattice]');
+
+  // Under reduced motion no timeline is constructed at all. The boot script
+  // never sets the pre-hidden flag in this mode, and global.css forces
+  // visibility as a second line of defence, so the grid renders complete.
+  if (root && !window.matchMedia(REDUCED_MOTION).matches) {
+    startLattice(root);
+  }
+</script>

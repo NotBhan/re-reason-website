@@ -1,0 +1,56 @@
+---
+import '@/styles/global.css';
+import { SITE } from '@/lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE.title, description = SITE.description } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#090A0C" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    {/*
+      Progressive-enhancement boot flag — the single mechanism that lets the
+      Anime.js layer animate content without a flash of pre-animation state.
+
+      `data-anim="on"` opts the document into the pre-hidden reveal styles in
+      global.css. It is only ever set when script can actually run, and it is
+      withdrawn again by a failsafe if the animation modules never report
+      readiness, so content can never be stranded invisible.
+
+      This script must stay inline and in <head>: it has to run before the
+      first paint, which a bundled (deferred) module would not.
+
+      See docs/motion-guidelines.md.
+    */}
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        root.setAttribute('data-anim', 'on');
+        window.setTimeout(function () {
+          if (root.getAttribute('data-anim-ready') !== 'true') {
+            root.removeAttribute('data-anim');
+          }
+        }, 1800);
+      })();
+    </script>
+  </head>
+
+  <body>
+    <slot />
+  </body>
+</html>

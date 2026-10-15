@@ -1,0 +1,88 @@
+---
+import { EVIDENCE } from '@/content/home';
+import { repoBlob } from '@/lib/site';
+import Findings from '@/components/motion/Findings';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import ExternalLink from '@/components/ui/ExternalLink.astro';
+
+// ===========================================================================
+// SECTION D — research and evidence
+// ---------------------------------------------------------------------------
+// Every figure and statement in this section is sourced from the research
+// repository; see src/content/home.ts for the per-item provenance.
+//
+// The metrics are a definition list rather than a table: they read as a results
+// ledger, stay legible at 390px with no horizontal scrolling, and keep the
+// label/value relationship explicit for assistive technology.
+//
+// Animation ownership: the metrics are static. Motion for React owns the
+// findings island (including its server-rendered, no-JavaScript state).
+// ===========================================================================
+---
+
+<section id="evidence" class="border-t border-line">
+  <div class="shell section-pad">
+    <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
+      <div class="lg:col-span-5">
+        <Eyebrow number="03" label={EVIDENCE.eyebrow} />
+        <h2 class="mt-8 text-display text-balance">{EVIDENCE.heading}</h2>
+        <p class="mt-8 measure text-body text-ash">{EVIDENCE.statusLine}</p>
+      </div>
+
+      <div class="lg:col-span-6 lg:col-start-7">
+        <div class="border border-line">
+          <p class="label border-b border-line px-4 py-3 text-ash-dim">
+            {EVIDENCE.metrics.caption}
+          </p>
+
+          <dl class="px-4">
+            {
+              EVIDENCE.metrics.rows.map((row) => (
+                <div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 border-t border-line py-5 first:border-t-0">
+                  <dt class="flex flex-wrap items-baseline gap-x-3">
+                    <span class="text-caption text-bone">{row.cells[0]}</span>
+                    <span class="label text-ash-dim">{row.cells[1]}</span>
+                  </dt>
+                  <dd
+                    class:list={[
+                      'tabular font-mono text-lead',
+                      row.primary ? 'text-bone' : 'text-ash',
+                    ]}
+                  >
+                    {row.cells[2]}
+                  </dd>
+                </div>
+              ))
+            }
+          </dl>
+
+          <p class="flex flex-wrap gap-x-5 gap-y-2 border-t border-line px-4 py-3">
+            {
+              EVIDENCE.metrics.sources.map((source) => (
+                <ExternalLink
+                  href={repoBlob(source.path)}
+                  class="mono text-ash-dim transition-colors duration-200 ease-out [overflow-wrap:anywhere] hover:text-bone"
+                >
+                  {source.label}
+                </ExternalLink>
+              ))
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-24 sm:mt-32">
+      <div class="grid gap-10 lg:grid-cols-12 lg:gap-16">
+        <div class="min-w-0 lg:col-span-5">
+          <h3 class="font-display text-title">{EVIDENCE.findingsHeading}</h3>
+          <p class="mt-5 measure text-body text-ash">{EVIDENCE.findingsIntro}</p>
+        </div>
+
+        <div class="min-w-0 lg:col-span-6 lg:col-start-7">
+          <Findings findings={EVIDENCE.findings} client:visible />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

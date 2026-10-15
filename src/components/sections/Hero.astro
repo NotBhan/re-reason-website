@@ -1,0 +1,121 @@
+---
+import type { Segment, Tone, Weight } from '@/content/home';
+import { HERO } from '@/content/home';
+import { SECTIONS, linkFor } from '@/lib/site';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import ExternalLink from '@/components/ui/ExternalLink.astro';
+import Specimen from '@/components/ui/Specimen.astro';
+
+// ===========================================================================
+// SECTION A — opening
+// ---------------------------------------------------------------------------
+// Animation ownership: CSS only. The eyebrow, lead, actions, specimen rows and
+// contents index use the staggered `data-reveal="enter"` entrance defined in
+// global.css. Nothing here is scripted.
+//
+// The headline is deliberately excluded. It is the largest contentful paint,
+// so it is present on the first frame and the sequence builds around it rather
+// than delaying it. See docs/motion-guidelines.md.
+// ===========================================================================
+
+// Tailwind scans source text, so these class names must stay literal.
+const TONE: Record<Tone, string> = {
+  bone: 'text-bone',
+  signal: 'text-signal',
+  ash: 'text-ash',
+};
+
+const WEIGHT: Record<Weight, string> = {
+  light: 'font-light',
+  normal: 'font-normal',
+  medium: 'font-medium',
+  semibold: 'font-semibold',
+};
+
+const segmentClass = (segment: Segment): Array<string | undefined> => [
+  segment.tone ? TONE[segment.tone] : undefined,
+  segment.weight ? WEIGHT[segment.weight] : undefined,
+];
+---
+
+<section id="top">
+  <div class="shell pt-12 pb-[var(--section-block)] sm:pt-16 lg:pt-20">
+    <div data-reveal="enter">
+      <Eyebrow label={HERO.eyebrow} />
+    </div>
+
+    <h1 class="mt-10 max-w-[24ch] font-display text-mega font-normal text-balance sm:mt-14">
+      {
+        HERO.headline.map((line) => (
+          <span class="block">
+            {line.map((segment) => (
+              <span class:list={segmentClass(segment)}>{segment.text}</span>
+            ))}
+          </span>
+        ))
+      }
+    </h1>
+
+    <div class="mt-14 grid gap-x-16 gap-y-12 border-t border-line pt-10 sm:mt-20 lg:grid-cols-12">
+      <div class="lg:col-span-6">
+        <p class="measure text-lead text-ash" data-reveal="enter" style="--enter-delay: 90ms">
+          {HERO.lead}
+        </p>
+
+        <div
+          class="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4"
+          data-reveal="enter"
+          style="--enter-delay: 170ms"
+        >
+          <a
+            href={linkFor(HERO.primaryAction.hrefKey)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex min-h-[var(--hit-area)] items-center bg-signal px-5 font-mono text-label uppercase tracking-[0.12em] text-ink transition-colors duration-200 ease-out hover:bg-signal-deep"
+          >
+            {HERO.primaryAction.label}
+            <span class="ml-2" aria-hidden="true">&nearr;</span>
+            <span class="sr-only"> (opens in a new tab)</span>
+          </a>
+
+          <ExternalLink
+            href={linkFor(HERO.secondaryAction.hrefKey)}
+            class="label text-ash underline decoration-line-hi decoration-1 underline-offset-[6px] transition-colors duration-200 ease-out hover:text-bone hover:decoration-signal"
+          >
+            {HERO.secondaryAction.label}
+          </ExternalLink>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 lg:col-start-8">
+        <Specimen
+          title={HERO.specimen.title}
+          badge={HERO.specimen.badge}
+          name={HERO.specimen.name}
+          rows={HERO.specimen.rows}
+          notice={HERO.phaseNotice}
+        />
+      </div>
+    </div>
+
+    <nav aria-label="Contents" class="mt-20 sm:border-t sm:border-line" data-reveal="enter" style="--enter-delay: 560ms">
+      <ol class="grid sm:grid-cols-4">
+        {
+          SECTIONS.map((section) => (
+            <li class="border-t border-line sm:border-t-0 sm:border-l sm:border-line sm:first:border-l-0">
+              <a
+                href={`#${section.id}`}
+                class="group flex items-baseline gap-4 py-5 transition-colors duration-200 ease-out sm:px-6 sm:first:pl-0"
+              >
+                <span class="label tabular text-ash-dim transition-colors duration-200 ease-out group-hover:text-signal">
+                  {section.number}
+                </span>
+                <span class="font-display text-lead text-bone">{section.label}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+  </div>
+</section>

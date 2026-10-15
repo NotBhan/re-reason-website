@@ -1,0 +1,67 @@
+---
+// The hero's computational visual: the active architecture, read as an
+// instrument panel. Presentational only — content arrives as props, all of it
+// VERIFIED in the research repository.
+//
+// The staggered entrance is CSS-owned (data-reveal="enter" + --enter-delay).
+// Nothing scripted touches these elements.
+import type { SpecRow } from '@/content/home';
+import Marks from '@/components/ui/Marks.astro';
+
+interface Props {
+  title: string;
+  badge: string;
+  name: string;
+  rows: ReadonlyArray<SpecRow>;
+  notice?: string;
+}
+
+const { title, badge, name, rows, notice } = Astro.props;
+---
+
+<div class="relative border border-line-hi bg-surface">
+  <Marks />
+
+  <div class="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
+    <span class="label text-ash" data-reveal="enter" style="--enter-delay: 200ms">{title}</span>
+    <span
+      class="label border border-control px-2 py-0.5 text-ash-dim"
+      data-reveal="enter"
+      style="--enter-delay: 240ms">{badge}</span
+    >
+  </div>
+
+  <div class="border-b border-line px-4 py-5">
+    <p class="font-display text-lead font-medium text-bone" data-reveal="enter" style="--enter-delay: 280ms">
+      {name}
+    </p>
+  </div>
+
+  <dl>
+    {
+      rows.map((row, index) => (
+        <div
+          class="flex items-baseline justify-between gap-4 border-b border-line px-4 py-2.5 last:border-b-0"
+          data-reveal="enter"
+          style={`--enter-delay: ${320 + index * 60}ms`}
+        >
+          <dt class="label text-ash-dim">{row.label}</dt>
+          <dd class="tabular font-mono text-label text-right text-bone">{row.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  {
+    notice && (
+      <p
+        class="border-t border-line px-4 py-3 text-caption text-ash-dim"
+        data-reveal="enter"
+        style="--enter-delay: 760ms"
+      >
+        <span class="mr-2 inline-block size-1.5 translate-y-[-1px] bg-signal" aria-hidden="true" />
+        {notice}
+      </p>
+    )
+  }
+</div>
