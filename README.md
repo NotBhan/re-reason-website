@@ -28,9 +28,9 @@ npm run typecheck    # alias for npm run check
 Astro (static) · TypeScript (strict) · Tailwind CSS 4 via `@tailwindcss/vite` ·
 React 19 (one island) · Motion for React (`motion/react`) · Anime.js 4 · CSS.
 
-## The homepage
+## The site
 
-Five sections, each with one clear job:
+**Homepage** (`/`) — five sections, each with one clear job:
 
 | # | Section | What it does | Animation |
 | --- | --- | --- | --- |
@@ -40,32 +40,66 @@ Five sections, each with one clear job:
 | D | Evidence | Measured results and open questions | Motion for React island |
 | E | Access | The public record | CSS hover and focus |
 
+**Research pages** (`/research/`) — twelve routes in total:
+
+```
+/research/                                 the editorial index
+/research/experiments/                     → /research/experiments/<id>
+/research/architectures/                   → /research/architectures/<id>
+/research/phases/                          → /research/phases/<id>
+```
+
+Research pages carry no client-side JavaScript at all. Each one states what its
+evidence establishes *and* what it does not, and links to the report it came
+from.
+
 ## Where things are
 
 ```
-src/content/home.ts          ALL page copy, with per-item provenance
+src/content/home.ts          ALL homepage copy, with per-item provenance
+src/content.config.ts        content collection schemas
+src/content/{experiments,architectures,phases}/   research entries
 src/lib/site.ts              site metadata, sections, verified outbound URLs
+src/lib/research.ts          collection helpers, related-reference validation
 src/styles/global.css        design tokens, base layer, utilities
-src/components/sections/     the five sections
+src/pages/                   the homepage and the research routes
+src/components/sections/     the homepage's five sections
+src/components/research/     shared research-page components
 src/components/motion/       the Anime.js lattice and the React island
 src/components/ui/           reused primitives
-docs/                        architecture and motion conventions
+scripts/                     font and figure tooling (run by hand, not at build time)
+docs/                        architecture, typography, content model, figures, motion
 ```
 
 ## Before changing anything
 
-- **Copy lives in one file.** `src/content/home.ts` is the only place strings are
-  written. It separates material taken from the research repository (published
-  measurements, cited) from editorial framing written for the site (provisional).
+- **Copy lives in two places, by design.** `src/content/home.ts` holds the
+  homepage's editorial layer, split into material taken from the research
+  repository (published measurements, cited) and provisional framing. Research
+  entries in `src/content/` are held to a stricter rule: everything in them is
+  verified material.
 - **Do not add research claims.** The project maintains an explicit list of
   claims it refuses to make; the site inherits them. No novelty claim, and a
   measured observation is never presented as a cause.
+- **Read a figure's report before publishing the figure.**
+  [docs/figures.md](docs/figures.md) records two figures that fail that check and
+  are deliberately not published.
 - **Outbound URLs are verified.** Everything in `LINKS` was checked to resolve.
   Do not add a link that has not been.
 - **Animation has one owner per property.** Read
-  [docs/motion-guidelines.md](docs/motion-guidelines.md) first;
-  [docs/architecture.md](docs/architecture.md) covers tokens, the content model
-  and the rendering model.
+  [docs/motion-guidelines.md](docs/motion-guidelines.md) first.
+
+## Regenerating assets
+
+```bash
+node scripts/fetch-fonts.mjs          # self-hosted webfonts
+node scripts/build-symbol-font.mjs    # the operator fallback subset
+node scripts/sync-figures.mjs         # copy published figures + record hashes
+node scripts/sync-figures.mjs --check # report drift against the hash manifest
+```
+
+The build does not run these. The site does not depend on the research
+repository being present.
 
 ## Accessibility and resilience
 

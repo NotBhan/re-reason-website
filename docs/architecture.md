@@ -1,8 +1,10 @@
 # Architecture
 
 Notes for the RE:REASON presentation site. Read together with
-[motion-guidelines.md](./motion-guidelines.md), which covers the animation
-layers in detail.
+[motion-guidelines.md](./motion-guidelines.md) for the animation layers,
+[typography.md](./typography.md) for the type system, [content-model.md](./content-model.md)
+for how research material is stored and validated, and [figures.md](./figures.md) for the
+figure audit.
 
 This repository is the **website**. It is a presentation layer over the research
 repository at <https://github.com/NotBhan/re-reason>, which is the source of
@@ -12,7 +14,7 @@ record for every technical claim made here.
 
 | Package | Version | Responsibility |
 | --- | --- | --- |
-| `astro` | 7.3.8 | Routing, layouts, static-first rendering. Static output; no adapter. |
+| `astro` | 7.3.8 | Routing, layouts, static-first rendering, content collections. Static output; no adapter. |
 | `@astrojs/react` | 7.0.1 | Lets React components be used as hydrated islands. |
 | `react` / `react-dom` | 19.3.1 | Runtime for the single interactive island. |
 | `tailwindcss` + `@tailwindcss/vite` | 4.3.3 | Utility styling through the official Vite plugin (Tailwind CSS 4 — not the v3 PostCSS setup). |
@@ -20,53 +22,72 @@ record for every technical claim made here.
 | `animejs` | 4.5.0 | Timeline and SVG animation, imported from `animejs`. |
 | `typescript` | 6.0.3 | Strict typing. |
 | `@astrojs/check` | 0.9.10 | `astro check` diagnostics. |
+| `@types/node` | 26.6.5 | Types for the build-time scripts and the PNG header reader. |
 
 `typescript` is pinned to `^6` because `@astrojs/check` declares a peer range of
 `^5 || ^6`. Do not bump it to 7 until that peer range moves.
 
-There is no GSAP, no separate Framer Motion dependency, no animation plugin.
-The three layers are CSS, Anime.js and Motion for React, and nothing else should
-be added without removing one.
+There is no GSAP, no separate Framer Motion dependency, no image-processing
+dependency, and no animation plugin. The three layers are CSS, Anime.js and
+Motion for React, and nothing else should be added without removing one.
 
 ## Directory layout
 
 ```
 src/
-  layouts/BaseLayout.astro     document shell, metadata, progressive-enhancement boot script
-  pages/index.astro            the homepage, composed from five sections
+  layouts/
+    BaseLayout.astro        document shell, metadata, progressive-enhancement boot script
+    ResearchLayout.astro    shell for the research routes
+  pages/
+    index.astro             the homepage, composed from five sections
+    research/
+      index.astro           the research index
+      [category]/index.astro  generates all three category indexes
+      experiments/[id].astro
+      architectures/[id].astro
+      phases/[id].astro
+  content.config.ts         content collection schemas
+  content/
+    home.ts                 ALL homepage copy, with provenance
+    experiments/*.md        one file per experiment
+    architectures/*.md
+    phases/*.md
   components/
-    sections/                  the page's sections, in reading order
-      Hero.astro               A — CSS-animated entrance, no script
-      Premise.astro            B — static
-      Structure.astro          C — editorial frame around the lattice
-      Evidence.astro           D — metrics (static) + findings island
-      Access.astro             E — static
-    motion/                    anything that needs a script to animate
-      StateLattice.astro       Anime.js timeline, scoped CSS, replay control
-      Findings.tsx             Motion for React island
-    layout/                    header and footer
-    ui/                        reused primitives
-      Eyebrow.astro            orange-marked section label
-      ExternalLink.astro       outbound link with an accessible new-tab cue
-      Marks.astro              hairline registration corners
-      Specimen.astro           the hero's architecture readout
-  content/home.ts              ALL page copy, with provenance
-  lib/site.ts                  site metadata, sections, verified outbound URLs
-  styles/global.css            design tokens, base layer, utilities
-  env.d.ts                     astro/client type reference
-public/favicon.svg
-docs/                          this file and the motion guidelines
+    sections/               the homepage's five sections
+    motion/                 StateLattice.astro (Anime.js), Findings.tsx (Motion island)
+    research/               shared research-page components
+    layout/                 header and footer
+    ui/                     reused primitives
+  lib/
+    site.ts                 metadata, sections, verified outbound URLs
+    research.ts             collection helpers, related-reference validation
+    figures.ts              PNG header reader, for intrinsic figure sizes
+  styles/
+    global.css              design tokens, base layer, utilities
+    fonts.css               generated @font-face rules
+  env.d.ts                  astro/client type reference
+public/
+  fonts/                    self-hosted webfonts + SOURCES.json
+  figures/                  published research figures + SOURCES.json
+  favicon.svg
+scripts/
+  fetch-fonts.mjs           downloads the webfonts
+  build-symbol-font.mjs     subsets the operator fallback font
+  sync-figures.mjs          copies figures and records their hashes
+docs/                       this file and the four companion documents
 ```
 
 Conventions:
 
-- `.astro` by default. React only where state or gestures justify it.
-- `components/sections/` holds one file per page section. A section owns its own
-  animation **only** when that animation is CSS-only; when a script is needed the
-  animated piece moves to `components/motion/` and the section keeps the
-  editorial frame.
-- `components/ui/` holds primitives reused by more than one section. It is
-  deliberately small.
+- `.astro` by default. React only where state or gestures justify it — there is
+  exactly one React island, and it is on the homepage.
+- `components/sections/` holds one file per homepage section. A section owns its
+  own animation **only** when that animation is CSS-only; when a script is needed
+  the animated piece moves to `components/motion/`.
+- `components/research/` holds components reused across research pages. The
+  homepage does not use them; its composition is deliberately different.
+- `build`-time scripts live in `scripts/` and are run by hand, never at build
+  time. The site does not depend on the research repository being present.
 - `#`-prefixed imports alias to `src/` through `tsconfig.json` `paths`, which
   Astro resolves automatically.
 

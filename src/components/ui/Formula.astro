@@ -1,0 +1,56 @@
+---
+import type { FormulaToken } from '@/content/home';
+
+// Renders a stored formula with real <sub> markup.
+//
+// Storing formulas as tokens rather than strings keeps the subscript positions
+// in the content model, so nothing has to rely on Unicode subscript characters
+// (which the site's webfonts do not carry) or on hand-written HTML in a data
+// file. See docs/typography.md.
+
+interface Props {
+  tokens: ReadonlyArray<FormulaToken>;
+  class?: string;
+}
+
+const { tokens, class: className } = Astro.props;
+---
+
+<span class:list={['formula', className]}>
+  {
+    /* A base and its subscript are wrapped together so a line break can never
+       separate the two when the formula wraps on a narrow viewport. */
+    tokens.map((token, index) => {
+      if (typeof token !== 'string') return null;
+      const next = tokens[index + 1];
+      const pairsWithSubscript = typeof next === 'object' && next !== null;
+      const inner = pairsWithSubscript ? (
+        <>
+          {token}
+          <sub>{next.sub}</sub>
+        </>
+      ) : (
+        token
+      );
+      return pairsWithSubscript ? <span class="formula-pair">{inner}</span> : inner;
+    })
+  }
+</span>
+
+<style>
+  /* Subscripts sit slightly smaller than the browser default, which is tuned
+     for footnotes rather than for notation set inline. */
+  .formula sub {
+    font-size: 0.72em;
+    line-height: 0;
+  }
+
+  /*
+    No `white-space: nowrap` on the pairs, deliberately. A base and its
+    subscript are separated by no whitespace, so there is already no break
+    opportunity between them — while the spaces *inside* a token remain valid
+    break points, which is what lets a long formula wrap on a narrow viewport.
+    Adding nowrap would forbid those and push the whole expression onto one
+    unbreakable line.
+  */
+</style>

@@ -1,0 +1,23 @@
+---
+// Standard research-page section: hairline rule, tracked label, content.
+//
+// Research pages repeat this shape a dozen times per page, which is exactly the
+// kind of repetition worth extracting — the alternative is hand-repeating a
+// border, a heading level and a spacing value that then drift apart.
+interface Props {
+  label: string;
+  /** Renders the label as an h2 (default) or h3 for nested sections. */
+  level?: 2 | 3;
+  class?: string;
+}
+
+const { label, level = 2, class: className } = Astro.props;
+const Heading = level === 2 ? 'h2' : 'h3';
+---
+
+<section class:list={['mt-14 border-t border-line pt-8', className]}>
+  <Heading class="label text-ash-dim">{label}</Heading>
+  <div class="mt-6">
+    <slot />
+  </div>
+</section>

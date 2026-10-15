@@ -1,0 +1,66 @@
+---
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+
+// Shared header for every research page.
+//
+// Titles use the display scale but not the homepage's mega scale: a research
+// page heading is a sentence about a specific experiment, not a masthead, and
+// setting it at 104px would trade legibility for effect.
+interface MetaItem {
+  label: string;
+  value: string;
+  tone?: 'bone' | 'ash' | 'signal';
+}
+
+interface Props {
+  kind: string;
+  badge?: string;
+  title: string;
+  summary: string;
+  meta?: ReadonlyArray<MetaItem>;
+}
+
+const { kind, badge, title, summary, meta = [] } = Astro.props;
+
+const TONE: Record<'bone' | 'ash' | 'signal', string> = {
+  bone: 'text-bone',
+  ash: 'text-ash',
+  signal: 'text-signal',
+};
+---
+
+<header>
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+    <Eyebrow label={kind} />
+    {
+      badge && (
+        <span class="label border border-control px-2 py-0.5 text-ash" aria-hidden="true">
+          {badge}
+        </span>
+      )
+    }
+  </div>
+
+  {/*
+    overflow-wrap is a safety net for titles that are a single long identifier —
+    "NonlinearCandidateMGU" cannot be broken at any normal point, and at the
+    display scale it overflows a 390px viewport. It only applies when the word
+    genuinely cannot fit, so ordinary sentence titles are unaffected.
+  */}
+  <h1 class="mt-8 max-w-[24ch] text-display text-balance [overflow-wrap:anywhere]">{title}</h1>
+
+  <p class="measure-wide mt-8 text-lead text-ash">{summary}</p>
+
+  {
+    meta.length > 0 && (
+      <dl class="mt-12 grid gap-x-12 gap-y-5 border-t border-line pt-6 sm:grid-cols-2 lg:grid-cols-3">
+        {meta.map((item) => (
+          <div>
+            <dt class="label text-ash-dim">{item.label}</dt>
+            <dd class:list={['mt-2 text-caption', TONE[item.tone ?? 'bone']]}>{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</header>

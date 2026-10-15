@@ -1,0 +1,42 @@
+---
+// Source documents and reproducibility artifacts. Contents only — the page
+// wraps it in a <Section>.
+//
+// Paths are set in monospace without an uppercase transform, because a file
+// path is case-sensitive and upper-casing it misrepresents it.
+import { repoBlob } from '@/lib/site';
+
+interface Ref {
+  path: string;
+  label?: string;
+}
+
+interface Props {
+  refs: ReadonlyArray<Ref>;
+  /** Locks the list to one column, for short lists. */
+  dense?: boolean;
+}
+
+const { refs, dense = false } = Astro.props;
+---
+
+<ul class:list={['grid gap-x-16 gap-y-3', !dense && 'sm:grid-cols-2']}>
+  {
+    refs.map((ref) => (
+      <li class="flex items-baseline gap-2">
+        <span class="text-line-hi" aria-hidden="true">
+          &middot;
+        </span>
+        <a
+          href={repoBlob(ref.path)}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mono text-ash transition-colors duration-200 ease-out [overflow-wrap:anywhere] hover:text-bone"
+        >
+          {ref.label ?? ref.path}
+          <span class="sr-only"> (opens in a new tab)</span>
+        </a>
+      </li>
+    ))
+  }
+</ul>

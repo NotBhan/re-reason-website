@@ -1,0 +1,37 @@
+{
+  "note": "SHA-256 of every published research figure, copied byte for byte from the RE:REASON research repository. Regenerate with `node scripts/sync-figures.mjs`. A hash change means the upstream figure was regenerated and the interpretation on the site may need re-checking against its report.",
+  "source": "re-reason/docs/reports/figures",
+  "synced": "2026-10-15",
+  "figures": [
+    {
+      "file": "experiment_g_gate_vs_commit_acc.png",
+      "bytes": 62956,
+      "sha256": "72a0d463b6072b07e4e889ab680dcfa96ed48c70f41e5ee7ef9d86bbca58400d"
+    },
+    {
+      "file": "experiment_g_confound_strata.png",
+      "bytes": 78772,
+      "sha256": "17a4874a9e871cc0f820154f754349bb1f71a652b5031a3f64f2081cbc526cff"
+    },
+    {
+      "file": "experiment_g_oracle_vs_committed.png",
+      "bytes": 54925,
+      "sha256": "c859eb4cf1dd840506c953ecb7cb549704d4180e616483a63420b4f58ba13430"
+    },
+    {
+      "file": "06_register_probe_accuracy_over_time.png",
+      "bytes": 54360,
+      "sha256": "fbb7f49df9979b992017d2cccc9e0c2bfce36e8725c44e694925b114ea6ab9d5"
+    },
+    {
+      "file": "07_retention_vs_intervening_steps.png",
+      "bytes": 52504,
+      "sha256": "693699b6900f1dd17f3376ae0214017f9d3d6e7fcc9844a6969186b71dba5d17"
+    },
+    {
+      "file": "08_failure_rate_by_operation_type.png",
+      "bytes": 37358,
+      "sha256": "199236457a458fc1fa2cd2b4f531792e41c4e2632dd3cf1dfb334dbeb8cdfe3c"
+    }
+  ]
+}

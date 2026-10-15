@@ -1,0 +1,37 @@
+---
+// Measured results, as a definition list. Contents only — the page wraps it in
+// a <Section> so the heading level and rule stay consistent across pages.
+//
+// A list rather than a table so it stays legible at 390px with no horizontal
+// scrolling, and so the label/value relationship is explicit for assistive
+// technology.
+interface Result {
+  label: string;
+  value: string;
+  note?: string;
+}
+
+interface Props {
+  rows: ReadonlyArray<Result>;
+}
+
+const { rows } = Astro.props;
+---
+
+<dl class="border-t border-line">
+  {
+    rows.map((row) => (
+      <div class="grid gap-x-16 gap-y-3 border-b border-line py-6 sm:grid-cols-[1fr_auto] sm:items-baseline">
+        <dt class="min-w-0">
+          <span class="text-body text-bone">{row.label}</span>
+          {row.note && (
+            <span class="measure-wide mt-3 block text-caption text-ash-dim">{row.note}</span>
+          )}
+        </dt>
+        <dd class="tabular max-w-full font-mono text-body text-signal [overflow-wrap:anywhere] sm:text-right">
+          {row.value}
+        </dd>
+      </div>
+    ))
+  }
+</dl>

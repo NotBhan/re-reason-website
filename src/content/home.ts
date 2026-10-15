@@ -43,6 +43,17 @@ export interface Segment {
   weight?: Weight;
 }
 
+/**
+ * A formula is stored as tokens rather than a single string so it can be set
+ * with real `<sub>` markup.
+ *
+ * The alternative — Unicode subscript characters such as U+209C — was measured
+ * and rejected: none of the site's webfonts carry them in any subset, so the
+ * browser would substitute a system font mid-formula, and screen readers
+ * pronounce them inconsistently. See docs/typography.md.
+ */
+export type FormulaToken = string | { sub: string };
+
 export interface SpecRow {
   label: string;
   value: string;
@@ -101,7 +112,7 @@ export const HERO: HeroContent = {
       { label: 'state', value: '212-dim' },
       { label: 'observation', value: '256-dim embedding' },
       { label: 'candidate', value: '146-dim hidden' },
-      { label: 'update', value: 'Sₜ = (1−fₜ)⊙Sₜ₋₁ + fₜ⊙Cₜ' },
+      { label: 'commit', value: 'convex-bounded, element-wise' },
       { label: 'classification', value: 'known recurrence — MGU family' },
     ],
   },
@@ -184,8 +195,8 @@ export interface StructureContent {
   eyebrow: string;
   heading: string;
   intro: string;
-  rule: string;
-  ruleCaption: string;
+  rule: ReadonlyArray<FormulaToken>;
+  ruleCaption: ReadonlyArray<FormulaToken>;
   whyItMatters: string;
   task: { label: string; facts: ReadonlyArray<string> };
   diagram: {
@@ -208,8 +219,24 @@ export const STRUCTURE: StructureContent = {
     'The active model commits with a bounded convex update. Each coordinate of the state either holds its previous value or moves toward the candidate, decided independently by that coordinate’s gate value.',
 
   /** VERIFIED — docs/RESEARCH_STATUS.md, "Official Phase-1 training objective". */
-  rule: 'Sₜ = (1 − fₜ) ⊙ Sₜ₋₁ + fₜ ⊙ Cₜ',
-  ruleCaption: 'fₜ is a full 212-dimensional gate vector, not a scalar. ⊙ is element-wise.',
+  rule: [
+    'S',
+    { sub: 't' },
+    ' = (1 − f',
+    { sub: 't' },
+    ') ⊙ S',
+    { sub: 't−1' },
+    ' + f',
+    { sub: 't' },
+    ' ⊙ C',
+    { sub: 't' },
+  ],
+
+  ruleCaption: [
+    'f',
+    { sub: 't' },
+    ' is a full 212-dimensional gate vector, not a scalar. ⊙ is the element-wise product.',
+  ],
 
   /** VERIFIED — experiment_h_lambda_interpolation.md; experiment_j_commit_intervention.md. */
   whyItMatters:

@@ -1,0 +1,37 @@
+---
+// Related research entries, resolved from `related` ids in frontmatter.
+import type { ResearchRef } from '@/lib/research';
+import { COLLECTION_META } from '@/lib/research';
+
+interface Props {
+  entries: ReadonlyArray<ResearchRef>;
+}
+
+const { entries } = Astro.props;
+---
+
+{
+  entries.length > 0 && (
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="label text-ash-dim">Related</h2>
+      <ul class="mt-5 border-t border-line">
+        {entries.map((entry) => (
+          <li class="border-b border-line">
+            <a
+              href={entry.href}
+              class="group grid gap-x-12 gap-y-2 py-6 sm:grid-cols-[10rem_1fr]"
+            >
+              <span class="label text-ash-dim">{COLLECTION_META[entry.kind].singular}</span>
+              <span>
+                <span class="block font-display text-lead text-bone transition-colors duration-200 ease-out group-hover:text-signal">
+                  {entry.title}
+                </span>
+                <span class="measure mt-2 block text-caption text-ash-dim">{entry.summary}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

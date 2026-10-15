@@ -1,0 +1,138 @@
+---
+import { getCollection, render } from 'astro:content';
+import Breadcrumbs from '@/components/research/Breadcrumbs.astro';
+import Formula from '@/components/ui/Formula.astro';
+import PageHeader from '@/components/research/PageHeader.astro';
+import PointList from '@/components/research/PointList.astro';
+import Prose from '@/components/research/Prose.astro';
+import RelatedEntries from '@/components/research/RelatedEntries.astro';
+import ResearchFigure from '@/components/research/ResearchFigure.astro';
+import Section from '@/components/research/Section.astro';
+import SourceList from '@/components/research/SourceList.astro';
+import ResearchLayout from '@/layouts/ResearchLayout.astro';
+import { resolveRelated } from '@/lib/research';
+
+// Architecture detail template.
+//
+// Deliberately a different shape from the experiment template. An architecture
+// has no "what this does not establish" in the experimental sense, so instead
+// it carries an explicit implementation status and a list of unresolved design
+// questions. That distinction is the reason these are separate collections
+// rather than one schema with most fields optional.
+export async function getStaticPaths() {
+  const entries = await getCollection('architectures');
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const data = entry.data;
+const related = await resolveRelated(data.related);
+
+const IMPLEMENTATION_LABEL: Record<'implemented' | 'not-implemented', string> = {
+  implemented: 'Implemented',
+  'not-implemented': 'Not implemented — documented design',
+};
+---
+
+<ResearchLayout
+  title={`${data.title} — Architecture — RE:REASON`}
+  description={data.summary}
+>
+  <Breadcrumbs
+    trail={[
+      { label: 'Research', href: '/research' },
+      { label: 'Architectures', href: '/research/architectures' },
+      { label: data.title },
+    ]}
+  />
+
+  <PageHeader
+    kind="Architecture"
+    title={data.title}
+    summary={data.summary}
+    meta={[
+      { label: 'Implementation', value: IMPLEMENTATION_LABEL[data.implementation] },
+      { label: 'Status', value: data.status },
+      { label: 'Source of record', value: 'Research repository' },
+    ]}
+  />
+
+  {
+    data.implementation === 'not-implemented' && (
+      <p class="measure-wide mt-12 border-l border-signal pl-5 text-body text-ash">
+        This design was specified and then not built. It is published because the reasons it
+        was set aside are part of the project's result, not because it describes a running
+        system.
+      </p>
+    )
+  }
+
+  <Section label="Purpose">
+    <p class="measure-wide text-body text-ash">{data.purpose}</p>
+  </Section>
+
+  {
+    data.updateRule && (
+      <Section label="Update rule">
+        <Formula
+          tokens={data.updateRule}
+          class="tabular block font-mono text-lead text-bone"
+        />
+        {data.updateRuleNote && (
+          <p class="measure-wide mt-5 text-caption text-ash-dim">{data.updateRuleNote}</p>
+        )}
+      </Section>
+    )
+  }
+
+  <Section label="Components">
+    <dl class="border-t border-line">
+      {data.components.map((component) => (
+        <div class="grid gap-x-16 gap-y-3 border-b border-line py-6 sm:grid-cols-[16rem_1fr]">
+          <dt class="font-display text-lead text-bone">{component.name}</dt>
+          <dd class="measure text-body text-ash">{component.detail}</dd>
+        </div>
+      ))}
+    </dl>
+  </Section>
+
+  {
+    data.constraints.length > 0 && (
+      <Section label="Constraints">
+        <PointList items={data.constraints} />
+      </Section>
+    )
+  }
+
+  {
+    data.openQuestions.length > 0 && (
+      <Section label="Open questions">
+        <PointList items={data.openQuestions} />
+      </Section>
+    )
+  }
+
+  {
+    data.figures.map((figure) => (
+      <ResearchFigure
+        file={figure.file}
+        title={figure.title}
+        caption={figure.caption}
+        context={figure.context}
+        alt={figure.alt}
+        sourcePath={data.sources[0].path}
+      />
+    ))
+  }
+
+  <Prose class="mt-16">
+    <Content />
+  </Prose>
+
+  <Section label="Source documents">
+    <SourceList refs={data.sources} />
+  </Section>
+
+  <RelatedEntries entries={related} />
+</ResearchLayout>

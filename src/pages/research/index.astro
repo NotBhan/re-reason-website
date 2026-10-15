@@ -1,0 +1,142 @@
+---
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import ExternalLink from '@/components/ui/ExternalLink.astro';
+import ResearchLayout from '@/layouts/ResearchLayout.astro';
+import { LINKS } from '@/lib/site';
+import {
+  badgeFor,
+  COLLECTION_META,
+  COLLECTIONS,
+  getAll,
+  type CollectionName,
+} from '@/lib/research';
+
+// Research index.
+//
+// The three collections are presented with different weights rather than as
+// three identical card grids: experiments carry their identifier and status,
+// architectures carry their implementation status, phases carry their number.
+// The composition is deliberately uneven so the reader can tell what kind of
+// material each block is before reading it.
+export const prerender = true;
+
+const groups = await Promise.all(
+  COLLECTIONS.map(async (kind: CollectionName) => ({
+    kind,
+    meta: COLLECTION_META[kind],
+    entries: await getAll(kind),
+  })),
+);
+
+const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
+---
+
+<ResearchLayout
+  title="Research — RE:REASON"
+  description="Published experiments, architecture notes and programme phases from the RE:REASON research repository, with sources and stated limitations."
+>
+  <Eyebrow label="Research" />
+
+  <h1 class="mt-8 max-w-[20ch] text-display text-balance">The record, in full.</h1>
+
+  <p class="measure-wide mt-8 text-lead text-ash">
+    Every experiment, architecture note and phase published here is taken from the research
+    repository, which remains the source of record. Each page states what its evidence
+    establishes <em>and</em> what it does not, and links to the report it came from.
+  </p>
+
+  <p class="measure-wide mt-6 text-body text-ash">
+    Nothing on this site reports a result that is not in the repository, and negative results
+    are published alongside positive ones — two of the entries below record approaches that
+    were tried and not adopted.
+  </p>
+
+  <dl class="mt-12 grid gap-x-12 gap-y-5 border-t border-line pt-6 sm:grid-cols-3">
+    <div>
+      <dt class="label text-ash-dim">Entries</dt>
+      <dd class="tabular mt-2 font-mono text-body text-bone">{total}</dd>
+    </div>
+    <div>
+      <dt class="label text-ash-dim">Source of record</dt>
+      <dd class="mt-2">
+        <ExternalLink
+          href={LINKS.repository}
+          class="mono text-ash transition-colors duration-200 ease-out hover:text-bone"
+        >
+          NotBhan/re-reason
+        </ExternalLink>
+      </dd>
+    </div>
+    <div>
+      <dt class="label text-ash-dim">Documentation policy</dt>
+      <dd class="mt-2 text-caption text-ash">
+        Reports are immutable once complete; corrections are appended, never edited in.
+      </dd>
+    </div>
+  </dl>
+
+  {
+    groups.map((group) => (
+      <section class="mt-24 sm:mt-32">
+        <div class="grid gap-x-16 gap-y-6 lg:grid-cols-12">
+          <div class="lg:col-span-5">
+            <Eyebrow label={group.meta.plural} />
+            <h2 class="mt-6 text-title">{group.meta.plural}</h2>
+            <p class="measure mt-5 text-body text-ash">{group.meta.blurb}</p>
+            <p class="mt-6">
+              <a
+                href={group.meta.href}
+                class="label text-ash underline decoration-line-hi underline-offset-[6px] transition-colors duration-200 ease-out hover:text-bone hover:decoration-signal"
+              >
+                All {group.entries.length} {group.meta.plural.toLowerCase()}
+              </a>
+            </p>
+          </div>
+
+          <ol class="lg:col-span-6 lg:col-start-7">
+            {group.entries.map((entry) => {
+              const badge = badgeFor(group.kind, entry.data as Record<string, unknown>);
+              const data = entry.data as { title: string; summary: string };
+              return (
+                <li class="border-t border-line last:border-b">
+                  <a href={`${group.meta.href}/${entry.id}`} class="group grid grid-cols-[3rem_1fr] gap-x-6 py-7">
+                    <span class="label tabular pt-1 text-signal">{badge ?? '—'}</span>
+                    <span>
+                      <span class="block font-display text-lead text-bone transition-colors duration-200 ease-out group-hover:text-signal">
+                        {data.title}
+                      </span>
+                      <span class="measure mt-3 block text-caption text-ash">{data.summary}</span>
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </section>
+    ))
+  }
+
+  <nav aria-label="Research areas" class="mt-24 border-t border-line pt-8 sm:mt-32">
+    <h2 class="label text-ash-dim">Browse</h2>
+    <ul class="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+      {
+        groups.map((group) => (
+          <li>
+            <a
+              href={group.meta.href}
+              class="label text-ash transition-colors duration-200 ease-out hover:text-bone"
+            >
+              {group.meta.plural}
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <a href="/" class="label text-ash transition-colors duration-200 ease-out hover:text-bone">
+          Home
+        </a>
+      </li>
+    </ul>
+  </nav>
+</ResearchLayout>

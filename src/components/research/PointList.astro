@@ -1,0 +1,28 @@
+---
+// A list of short research statements — held-fixed conditions, procedure
+// steps, limitations.
+//
+// Hairline-separated rows rather than bullets, so a list reads as a set of
+// discrete conditions rather than as prose broken up. Ordered lists are
+// numbered because procedure steps are a sequence.
+interface Props {
+  items: ReadonlyArray<string>;
+  ordered?: boolean;
+}
+
+const { items, ordered = false } = Astro.props;
+const List = ordered ? 'ol' : 'ul';
+---
+
+<List class="grid">
+  {
+    items.map((item, index) => (
+      <li class="flex gap-x-5 border-t border-line py-4 last:border-b">
+        <span class="label tabular shrink-0 pt-1 text-ash-dim" aria-hidden="true">
+          {ordered ? String(index + 1).padStart(2, '0') : '—'}
+        </span>
+        <span class="measure text-body text-ash">{item}</span>
+      </li>
+    ))
+  }
+</List>

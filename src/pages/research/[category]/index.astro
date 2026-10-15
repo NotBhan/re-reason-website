@@ -1,0 +1,76 @@
+---
+import Breadcrumbs from '@/components/research/Breadcrumbs.astro';
+import ResearchLayout from '@/layouts/ResearchLayout.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import {
+  badgeFor,
+  COLLECTION_META,
+  COLLECTIONS,
+  getAll,
+  type CollectionName,
+} from '@/lib/research';
+
+// The three category indexes, generated from one template.
+export async function getStaticPaths() {
+  return COLLECTIONS.map((category) => ({ params: { category } }));
+}
+
+const { category } = Astro.params as { category: string };
+
+if (!COLLECTIONS.includes(category as CollectionName)) {
+  throw new Error(`Unknown research category "${category}"`);
+}
+
+const kind = category as CollectionName;
+const meta = COLLECTION_META[kind];
+const entries = await getAll(kind);
+---
+
+<ResearchLayout
+  title={`${meta.plural} — RE:REASON`}
+  description={meta.blurb}
+>
+  <Breadcrumbs trail={[{ label: 'Research', href: '/research' }, { label: meta.plural }]} />
+
+  <Eyebrow label={`Research / ${meta.plural}`} />
+
+  <h1 class="mt-8 max-w-[20ch] text-display text-balance">{meta.plural}</h1>
+
+  <p class="measure-wide mt-8 text-lead text-ash">{meta.blurb}</p>
+
+  <ol class="mt-16 border-t border-line">
+    {
+      entries.map((entry) => {
+        const data = entry.data as Record<string, unknown> & { title: string; summary: string };
+        const badge = badgeFor(kind, data);
+        const status = typeof data.status === 'string' ? data.status : undefined;
+        return (
+          <li class="border-b border-line">
+            <a
+              href={`${meta.href}/${entry.id}`}
+              class="group grid gap-x-8 gap-y-4 py-8 sm:grid-cols-[4rem_1fr_8rem] sm:items-baseline"
+            >
+              <span class="label tabular text-signal">{badge ?? '—'}</span>
+              <span>
+                <span class="block font-display text-title transition-colors duration-200 ease-out group-hover:text-signal">
+                  {data.title}
+                </span>
+                <span class="measure mt-4 block text-body text-ash">{data.summary}</span>
+              </span>
+              {status && <span class="label text-ash-dim sm:text-right">{status}</span>}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ol>
+
+  <p class="mt-12">
+    <a
+      href="/research"
+      class="label text-ash underline decoration-line-hi underline-offset-[6px] transition-colors duration-200 ease-out hover:text-bone hover:decoration-signal"
+    >
+      All research
+    </a>
+  </p>
+</ResearchLayout>

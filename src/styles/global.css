@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './fonts.css';
 
 /* ===========================================================================
    RE:REASON — art direction tokens
@@ -20,6 +21,28 @@
      control#5C606A    ~3.15:1  interactive control boundaries (WCAG 1.4.11)
    bone on a signal fill is ~2.6:1 and must never be used.
    =========================================================================== */
+
+/* --- Symbol fallback -----------------------------------------------------
+   Sits at the end of every font stack. The text webfonts' latin, latin-ext and
+   greek subsets do not carry the operators this site sets — the Hadamard
+   operator, arrows, and structural comparison operators — so without this the
+   browser would substitute an arbitrary system font mid-formula.
+
+   It is a 1.9 kB subset of Noto Sans Math (SIL OFL 1.1), built and verified by
+   `node scripts/build-symbol-font.mjs` from the upstream source. It is declared
+   here rather than in the generated fonts.css because it belongs to the token
+   system, not to the fetched family set.
+
+   No `unicode-range`: the browser consults it only for codepoints the earlier
+   families in the stack cannot render.
+-------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'RE Symbols';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/re-symbols.woff2') format('woff2');
+}
 
 /* --- Tailwind theme tokens ------------------------------------------------
    Only Tailwind v4 namespace tokens live in `@theme`, because that is what
@@ -51,20 +74,25 @@
 
   /* ---------------------------------------------------------------------
      Modular type families.
-     Three independent slots. Each can be replaced on its own without
-     touching the others, which is the whole point of the split:
+     Three independent slots, each replaceable on its own:
 
-       1. Add an `@font-face` (self-hosted) or a licensed `<link>` in
-          BaseLayout.astro.
+       1. Add the family to FAMILIES in scripts/fetch-fonts.mjs and run
+          `node scripts/fetch-fonts.mjs` (it writes src/styles/fonts.css).
        2. Repoint the slot below. Nothing else changes.
 
        --font-display   headlines, the wordmark, section numbering.
-                        Currently a neo-grotesque system stack.
-       --font-reading   prose and long-form copy. Deliberately separate from
-                        display so a reading face can be swapped in later
-                        without disturbing the headlines.
-       --font-mono      technical labels, metrics, register values, sources.
-     Do not download fonts ad hoc; a display face is a licensing decision.
+                        Archivo — a neo-grotesque with a large x-height that
+                        holds up at 104px and stays crisp at 11px labels.
+       --font-reading   prose. Source Serif 4, kept deliberately separate from
+                        display so long-form research text reads as a document
+                        rather than as marketing.
+       --font-mono      technical labels, metrics, identifiers, formulas.
+                        JetBrains Mono — carries Greek, so formulas set in the
+                        mono slot do not fall back.
+
+     All three end in 'RE Symbols' for operators and arrows, then in a system
+     stack so the page still sets correctly if a webfont never arrives.
+     Selection evidence and licences: docs/typography.md.
      --------------------------------------------------------------------- */
   --font-system-sans:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
@@ -72,9 +100,9 @@
   --font-system-mono:
     ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
-  --font-display: var(--font-system-sans);
-  --font-reading: var(--font-system-sans);
-  --font-mono: var(--font-system-mono);
+  --font-display: 'Archivo', 'RE Symbols', var(--font-system-sans);
+  --font-reading: 'Source Serif 4', 'RE Symbols', var(--font-system-sans);
+  --font-mono: 'JetBrains Mono', 'RE Symbols', var(--font-system-mono);
 
   /* ---------------------------------------------------------------------
      Editorial type scale — 11px technical label to 104px display.

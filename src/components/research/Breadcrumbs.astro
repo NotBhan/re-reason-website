@@ -1,0 +1,43 @@
+---
+// Breadcrumb trail for research pages. Renders as an ordered list so assistive
+// technology announces the position in the hierarchy, with the last item marked
+// as the current page.
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  trail: ReadonlyArray<Crumb>;
+}
+
+const { trail } = Astro.props;
+---
+
+<nav aria-label="Breadcrumb" class="mb-10">
+  <ol class="flex flex-wrap items-center gap-x-3 gap-y-1">
+    {
+      trail.map((crumb, index) => (
+        <li class="flex items-center gap-3">
+          {crumb.href ? (
+            <a
+              href={crumb.href}
+              class="label text-ash-dim transition-colors duration-200 ease-out hover:text-bone"
+            >
+              {crumb.label}
+            </a>
+          ) : (
+            <span class="label text-ash" aria-current="page">
+              {crumb.label}
+            </span>
+          )}
+          {index < trail.length - 1 && (
+            <span class="label text-line-hi" aria-hidden="true">
+              /
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

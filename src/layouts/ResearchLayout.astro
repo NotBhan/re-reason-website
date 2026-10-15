@@ -1,0 +1,32 @@
+---
+import Footer from '@/components/layout/Footer.astro';
+import Header from '@/components/layout/Header.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+// Shell for the research routes.
+//
+// Research pages share conventions — a breadcrumb, a page header, evidence in a
+// consistent shape — but they deliberately do NOT reuse the homepage's
+// five-section editorial composition. The homepage is a narrative; these pages
+// are documents, and a document benefits from predictable structure and denser
+// typography rather than from whitespace and reveal choreography.
+//
+// No animation layer is loaded here. Nothing on a research page depends on
+// script: the Anime.js lattice and the Motion island belong to the homepage.
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <Header />
+
+  <main id="main" class="shell pt-12 pb-[var(--section-block)] sm:pt-16">
+    <slot />
+  </main>
+
+  <Footer />
+</BaseLayout>

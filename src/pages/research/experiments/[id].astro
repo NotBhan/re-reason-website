@@ -1,0 +1,122 @@
+---
+import { getCollection, render } from 'astro:content';
+import Breadcrumbs from '@/components/research/Breadcrumbs.astro';
+import EvidencePairs from '@/components/research/EvidencePairs.astro';
+import PageHeader from '@/components/research/PageHeader.astro';
+import PointList from '@/components/research/PointList.astro';
+import Prose from '@/components/research/Prose.astro';
+import RelatedEntries from '@/components/research/RelatedEntries.astro';
+import ResearchFigure from '@/components/research/ResearchFigure.astro';
+import ResultRows from '@/components/research/ResultRows.astro';
+import Section from '@/components/research/Section.astro';
+import SourceList from '@/components/research/SourceList.astro';
+import ResearchLayout from '@/layouts/ResearchLayout.astro';
+import { resolveRelated } from '@/lib/research';
+
+// Experiment detail template.
+//
+// The page order follows the order a reader needs in order to judge the result
+// rather than the order the report happens to use: question, motivation, what
+// was held fixed, how it was measured, what was measured, what that supports,
+// what it does not, and only then the longer interpretation. Limitations sit
+// above the figures on purpose — a plot should not be met without them.
+export async function getStaticPaths() {
+  const entries = await getCollection('experiments');
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const data = entry.data;
+const related = await resolveRelated(data.related);
+---
+
+<ResearchLayout
+  title={`Experiment ${data.identifier} — ${data.title} — RE:REASON`}
+  description={data.summary}
+>
+  <Breadcrumbs
+    trail={[
+      { label: 'Research', href: '/research' },
+      { label: 'Experiments', href: '/research/experiments' },
+      { label: `Experiment ${data.identifier}` },
+    ]}
+  />
+
+  <PageHeader
+    kind="Experiment"
+    badge={data.identifier}
+    title={data.title}
+    summary={data.summary}
+    meta={[
+      { label: 'Status', value: 'Completed' },
+      { label: 'Completed', value: data.date },
+      { label: 'Classification', value: data.classification },
+    ]}
+  />
+
+  <Section label="Research question">
+    <p class="measure-wide font-display text-lead text-bone">{data.question}</p>
+  </Section>
+
+  <Section label="Motivation">
+    <p class="measure-wide text-body text-ash">{data.motivation}</p>
+  </Section>
+
+  <Section label="Held fixed">
+    <PointList items={data.frozen} />
+  </Section>
+
+  <Section label="Procedure">
+    <PointList items={data.procedure} ordered />
+  </Section>
+
+  <Section label="Results">
+    <ResultRows rows={data.results} />
+  </Section>
+
+  <EvidencePairs establishes={data.establishes} doesNotEstablish={data.doesNotEstablish} />
+
+  <Section label="Limitations">
+    <PointList items={data.limitations} />
+  </Section>
+
+  {
+    data.nextStep && (
+      <Section label="Next step">
+        <p class="measure-wide text-body text-ash">{data.nextStep}</p>
+      </Section>
+    )
+  }
+
+  {
+    data.figures.map((figure) => (
+      <ResearchFigure
+        file={figure.file}
+        title={figure.title}
+        caption={figure.caption}
+        context={figure.context}
+        alt={figure.alt}
+        sourcePath={data.sources[0].path}
+      />
+    ))
+  }
+
+  <Prose class="mt-16">
+    <Content />
+  </Prose>
+
+  <Section label="Source report">
+    <SourceList refs={data.sources} dense />
+  </Section>
+
+  {
+    data.artifacts.length > 0 && (
+      <Section label="Reproducibility artifacts">
+        <SourceList refs={data.artifacts} />
+      </Section>
+    )
+  }
+
+  <RelatedEntries entries={related} />
+</ResearchLayout>

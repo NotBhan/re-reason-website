@@ -1,5 +1,5 @@
 ---
-import { LINKS, SECTIONS } from '@/lib/site';
+import { LINKS, ROUTES, SECTIONS } from '@/lib/site';
 import ExternalLink from '@/components/ui/ExternalLink.astro';
 
 // Static Astro markup, no client-side JavaScript.
@@ -7,29 +7,57 @@ import ExternalLink from '@/components/ui/ExternalLink.astro';
 // Deliberate responsive split: the section list lives in the header on large
 // screens, and on small screens it moves into the hero's numbered contents
 // index instead of hiding behind a menu button. Nothing here needs a script.
+//
+// The section anchors only exist on the homepage, so they are only rendered
+// there. Showing them on a research page would be a set of links to nowhere.
+//
+// Active route: the research link is marked current whenever the path is under
+// /research, via aria-current, so the state is announced and not conveyed by
+// colour alone.
+const path = Astro.url.pathname;
+const isHome = path === '/' || path === '';
+const onResearch = path.startsWith('/research');
 ---
 
 <header class="sticky top-0 z-50 border-b border-line bg-ink">
   <div class="shell flex h-16 items-center justify-between gap-6">
     <a
-      href="#top"
+      href={ROUTES.home}
+      aria-label="RE:REASON — home"
       class="font-display text-caption font-medium tracking-[0.2em] text-bone uppercase transition-colors duration-200 ease-out hover:text-signal"
     >
       RE<span class="text-signal">:</span>REASON
     </a>
 
     <div class="flex items-center gap-5 sm:gap-7">
-      <nav aria-label="Sections" class="hidden items-center gap-7 lg:flex">
+      <nav aria-label="Primary" class="flex items-center gap-5 sm:gap-7">
+        <a
+          href={ROUTES.research}
+          aria-current={onResearch ? 'true' : undefined}
+          class:list={[
+            'label transition-colors duration-200 ease-out',
+            onResearch
+              ? 'text-bone underline decoration-signal decoration-1 underline-offset-[6px]'
+              : 'text-ash hover:text-bone',
+          ]}
+        >
+          Research
+        </a>
+
         {
-          SECTIONS.map((section) => (
-            <a
-              href={`#${section.id}`}
-              class="label text-ash transition-colors duration-200 ease-out hover:text-bone"
-            >
-              <span class="tabular mr-2 text-ash-dim">{section.number}</span>
-              {section.label}
-            </a>
-          ))
+          isHome && (
+            <div class="hidden items-center gap-7 lg:flex">
+              {SECTIONS.map((section) => (
+                <a
+                  href={`#${section.id}`}
+                  class="label text-ash transition-colors duration-200 ease-out hover:text-bone"
+                >
+                  <span class="tabular mr-2 text-ash-dim">{section.number}</span>
+                  {section.label}
+                </a>
+              ))}
+            </div>
+          )
         }
       </nav>
 

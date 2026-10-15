@@ -57,6 +57,9 @@ export interface Section {
  * Page sections, in reading order. The header navigation, the hero index and
  * the anchor ids in `index.astro` are all generated from this list, so a
  * section can never be added in one place and forgotten in another.
+ *
+ * These are anchors on the homepage only, so the header renders them only when
+ * the homepage is the current route.
  */
 export const SECTIONS: ReadonlyArray<Section> = [
   { id: 'premise', number: '01', label: 'Premise' },
@@ -64,3 +67,9 @@ export const SECTIONS: ReadonlyArray<Section> = [
   { id: 'evidence', number: '03', label: 'Evidence' },
   { id: 'access', number: '04', label: 'Access' },
 ] as const;
+
+/** Site-wide destinations, valid on every route. */
+export const ROUTES = {
+  home: '/',
+  research: '/research',
+} as const;
