@@ -133,16 +133,26 @@ development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
 
 ### Research integrity
 
+Content is synced to the RE:REASON research repository at **`e8aca1e`**, which was
+clean (no uncommitted changes) when read. Claims rest on committed artifacts at
+that revision, not on a working tree. Re-syncing means re-reading
+`docs/RESEARCH_STATUS.md` and `docs/RESEARCH_LOG.md` in that repository and
+comparing them against the pages above. The two repositories are separate; the
+site never reads the research repository at build time.
+
 - Both withheld figures remain absent from `public/` and `dist/` — asserted
   mechanically by the release validator, not just by inspection.
 - The disputed `mechanism_qa_diagnostic.md` §10 wording appears only in
   [figures.md](./figures.md), quoted as the subject of the dispute. It is not
   presented as a finding anywhere.
-- Phase 1.6 still states `FAILED its gate` and `accuracy 0.0000 (0/16) across all
-  five seeds`; `speculative-pipeline` still carries `implementation:
-  not-implemented` and states it was not built and is not currently pursued;
-  `nonlinear-candidate-mgu` still carries `implementation: implemented` and states
-  that the project makes no novelty claim for it.
+- Phase 1.6 states `FAILED its gate` and `accuracy 0.0000 (0/16) across all five
+  seeds` for Track 1A, and carries the later committed results — Stage 2 address
+  binding `PASSED, 1.0000 on 5/5 seeds` for Slot-MGU and `FAILED` for Cyclic-MGU
+  and the Vanilla GRU control, and EXP-CYCLIC-ADD-01 closed as `FAIL_REJECTION`.
+  `speculative-pipeline` still carries `implementation: not-implemented` and
+  states it was not built and is not currently pursued; `nonlinear-candidate-mgu`
+  still carries `implementation: implemented` and states that the project makes
+  no novelty claim for it.
 - Experiment entries carry `establishes`, `doesNotEstablish` and limitations;
   architecture entries carry implementation status, constraints and open
   questions; phase entries carry status, gate outcome and artifacts.

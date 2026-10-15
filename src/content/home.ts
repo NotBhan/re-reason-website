@@ -324,7 +324,7 @@ export const EVIDENCE: EvidenceContent = {
 
   /** VERIFIED — docs/RESEARCH_STATUS.md §5, "Active / next experiment". */
   statusLine:
-    'No experiment is currently running. The Phase 1.6 Stage 1 pilot is complete, and Stage 2 remains unauthorized pending review.',
+    'No experiment is currently running. Phase 1.6 Stage 2 is complete and EXP-CYCLIC-ADD-01 closed as a rejection; Stage 3 composed sequence training remains unauthorized pending review.',
 
   /** VERIFIED — docs/RESEARCH_STATUS.md, "Headline validated metrics". */
   metrics: {
@@ -461,14 +461,17 @@ export const EVIDENCE: EvidenceContent = {
     {
       id: 'pilot',
       status: 'current',
-      title: 'Phase 1.6 Stage 1 pilot',
+      title: 'Phase 1.6 — address binding without arithmetic',
       detail:
-        'Track 1A trained both candidates to a 100% training fit with zero validation accuracy across five seeds, failing its gate. Track 1B, the deterministic component pre-flight, passed exactly, 16/16.',
+        'The Stage 1 pilot fitted 100% of its 64 training pairs with zero validation accuracy across five seeds and failed its gate, while its deterministic pre-flight passed exactly, 16/16. Stage 2 passed address binding for Slot-MGU at 1.0000 on 5/5 seeds over 1,200 sequences, and failed Cyclic-MGU and the Vanilla GRU control below the rejection boundary. A third pilot, embedding an exact rotation operator in a trainable state, failed rejection at a mean of 0.0625 against chance 0.10.',
       establishes:
-        'A memorisation failure on 64 seen pairs, and that the deterministic components are exact.',
+        'That discrete slot partitioning supported address binding, and that the deterministic components are exact.',
       doesNotEstablish:
-        'A statement about trained capability in general — the held-out test split was firewalled and no checkpoints were retained.',
-      sources: [{ label: 'RESEARCH_STATUS.md', path: 'docs/RESEARCH_STATUS.md' }],
+        'That the arithmetic bottleneck is closed — binding an address is not computing with it, and no stage beyond Stage 2 is authorized.',
+      sources: [
+        { label: 'RESEARCH_STATUS.md', path: 'docs/RESEARCH_STATUS.md' },
+        { label: 'RESEARCH_LOG.md', path: 'docs/RESEARCH_LOG.md' },
+      ],
     },
   ],
 };
