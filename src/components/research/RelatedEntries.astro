@@ -12,8 +12,8 @@ const { entries } = Astro.props;
 
 {
   entries.length > 0 && (
-    <section class="mt-14 border-t border-line pt-8">
-      <h2 class="label text-ash-dim">Related</h2>
+    <section id="related" class="mt-16 scroll-mt-24 border-t border-line pt-8">
+      <h2 class="font-display text-section font-medium text-bone">Related</h2>
       <ul class="mt-5 border-t border-line">
         {entries.map((entry) => (
           <li class="border-b border-line">

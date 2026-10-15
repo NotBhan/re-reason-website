@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Breadcrumbs from '@/components/research/Breadcrumbs.astro';
+import ContentsNav from '@/components/research/ContentsNav.astro';
 import PageHeader from '@/components/research/PageHeader.astro';
 import PointList from '@/components/research/PointList.astro';
 import Prose from '@/components/research/Prose.astro';
@@ -28,6 +29,29 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 const data = entry.data;
 const related = await resolveRelated(data.related);
+
+/** One source for section labels; the nav and the sections both read from it. */
+const S = {
+  objectives: { id: 'objectives', label: 'Objectives' },
+  scope: { id: 'scope', label: 'Scope' },
+  results: { id: 'results', label: 'Results' },
+  decisions: { id: 'decisions', label: 'Decisions' },
+  notPlanned: { id: 'not-planned', label: 'Not planned' },
+  sources: { id: 'source-documents', label: 'Source documents' },
+  artifacts: { id: 'artifacts', label: 'Artifacts' },
+  related: { id: 'related', label: 'Related' },
+} as const;
+
+const contents = [
+  S.objectives,
+  S.scope,
+  ...(data.results.length > 0 ? [S.results] : []),
+  S.decisions,
+  ...(data.notPlanned.length > 0 ? [S.notPlanned] : []),
+  S.sources,
+  ...(data.artifacts.length > 0 ? [S.artifacts] : []),
+  S.related,
+];
 
 const STATUS_LABEL: Record<string, string> = {
   closed: 'Closed',
@@ -60,36 +84,40 @@ const STATUS_LABEL: Record<string, string> = {
     ]}
   />
 
-  <Section label="Objectives">
+  <ContentsNav items={contents} />
+
+  <Section id={S.objectives.id} label={S.objectives.label}>
     <PointList items={data.objectives} ordered />
   </Section>
 
-  <Section label="Scope">
-    <p class="measure-wide text-body text-ash">{data.scope}</p>
+  <Section id={S.scope.id} label={S.scope.label}>
+    <p class="measure-read text-body text-ash">{data.scope}</p>
   </Section>
 
   {
     data.results.length > 0 && (
-      <Section label="Results">
+      <Section id={S.results.id} label={S.results.label}>
         <ResultRows rows={data.results} />
       </Section>
     )
   }
 
-  <Section label="Decisions">
+  <Section id={S.decisions.id} label={S.decisions.label}>
     <dl class="border-t border-line">
-      {data.decisions.map((decision) => (
-        <div class="grid gap-x-16 gap-y-3 border-b border-line py-6 sm:grid-cols-[16rem_1fr]">
-          <dt class="font-display text-lead text-bone">{decision.label}</dt>
-          <dd class="measure text-body text-ash">{decision.outcome}</dd>
-        </div>
-      ))}
+      {
+        data.decisions.map((decision) => (
+          <div class="grid gap-x-16 gap-y-3 border-b border-line py-6 sm:grid-cols-[15rem_1fr]">
+            <dt class="font-display text-lead text-bone">{decision.label}</dt>
+            <dd class="measure-read text-body text-ash">{decision.outcome}</dd>
+          </div>
+        ))
+      }
     </dl>
   </Section>
 
   {
     data.notPlanned.length > 0 && (
-      <Section label="Not planned">
+      <Section id={S.notPlanned.id} label={S.notPlanned.label}>
         <PointList items={data.notPlanned} />
       </Section>
     )
@@ -112,13 +140,13 @@ const STATUS_LABEL: Record<string, string> = {
     <Content />
   </Prose>
 
-  <Section label="Source documents">
+  <Section id={S.sources.id} label={S.sources.label}>
     <SourceList refs={data.sources} />
   </Section>
 
   {
     data.artifacts.length > 0 && (
-      <Section label="Artifacts">
+      <Section id={S.artifacts.id} label={S.artifacts.label}>
         <SourceList refs={data.artifacts} />
       </Section>
     )

@@ -26,9 +26,13 @@ const { class: className } = Astro.props;
 
   .research-prose h2 {
     font-family: var(--font-display);
-    font-size: var(--text-title);
-    line-height: 1.15;
-    letter-spacing: -0.015em;
+    /* Matches the Section component's heading register. These are the same
+       level of thing in the reading order, so they must not be set at two
+       different sizes. */
+    font-size: var(--text-section);
+    font-weight: 500;
+    line-height: var(--text-section--line-height);
+    letter-spacing: var(--text-section--letter-spacing);
     color: var(--color-bone);
     margin-top: 3.5rem;
     padding-top: 1.5rem;

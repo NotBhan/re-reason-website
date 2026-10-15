@@ -127,6 +127,17 @@
   --text-lead--line-height: 1.5;
   --text-lead--letter-spacing: -0.005em;
 
+  /*
+    The mid register. Research pages carry long structured sections — Research
+    question, Procedure, Limitations — and figure titles. Without a size between
+    lead and title those headings collapse to the 12px label size, which leaves a
+    page with only two meaningful steps (71px title, 12px label) and makes the
+    structure unscannable. This fills that gap without competing with h1.
+  */
+  --text-section: clamp(1.25rem, 1.1rem + 0.7vw, 1.75rem); /* 20 → 28px */
+  --text-section--line-height: 1.2;
+  --text-section--letter-spacing: -0.012em;
+
   --text-title: clamp(1.5rem, 1.1rem + 1.7vw, 2.75rem); /* 24 → 44px */
   --text-title--line-height: 1.12;
   --text-title--letter-spacing: -0.015em;
@@ -258,6 +269,18 @@
 
 @utility measure-wide {
   max-width: 62ch;
+}
+
+/*
+  Reading measure for research body text.
+  `measure` caps at 46ch, which is right for the homepage's hero lead where a
+  narrow block beside a diagram is the point, but too narrow for sustained
+  reading: 46 characters per line is well below the 60-75 that reads
+  comfortably, and on a full-width research page it left most of the column
+  empty. This is the width long-form prose is set to.
+*/
+@utility measure-read {
+  max-width: 68ch;
 }
 
 /* The tracked-uppercase technical label used for section numbers, eyebrow

@@ -193,7 +193,22 @@ async function main() {
     process.exit(1);
   }
 
-  await rm(fontDir, { recursive: true, force: true });
+  /*
+    Remove only the files this script previously wrote, recorded in the manifest.
+    Blanket-deleting the directory would also remove re-symbols.woff2, which is
+    built by scripts/build-symbol-font.mjs and is not this script's to manage —
+    and without the symbol fallback the site's maths glyphs (the Hadamard
+    operator, the arrows) silently fall through to a system font.
+  */
+  try {
+    const previous = JSON.parse(await readFile(join(fontDir, 'SOURCES.json'), 'utf8'));
+    for (const entry of previous.families ?? []) {
+      await rm(join(fontDir, entry.file), { force: true });
+    }
+  } catch {
+    /* no previous run */
+  }
+
   await mkdir(fontDir, { recursive: true });
 
   const manifest = [];

@@ -1,23 +1,40 @@
 ---
-// Standard research-page section: hairline rule, tracked label, content.
+// Standard research-page section: hairline rule, heading, content.
 //
 // Research pages repeat this shape a dozen times per page, which is exactly the
-// kind of repetition worth extracting — the alternative is hand-repeating a
-// border, a heading level and a spacing value that then drift apart.
+// kind of repetition worth extracting.
+//
+// The heading is a real heading at the mid type register, not a tracked label.
+// At label size every section marker on a long page looked identical to the
+// metadata above it and to the next one, which made the structure of a research
+// document unscannable. The tracked label is kept as a small kicker for the
+// section number where one is meaningful.
 interface Props {
+  /** Anchor id, so the page's contents nav can link to this section. */
+  id: string;
   label: string;
-  /** Renders the label as an h2 (default) or h3 for nested sections. */
+  /** Optional tracked kicker above the heading. */
+  kicker?: string;
+  /** Renders the heading as an h2 (default) or h3 for nested sections. */
   level?: 2 | 3;
   class?: string;
 }
 
-const { label, level = 2, class: className } = Astro.props;
+const { id, label, kicker, level = 2, class: className } = Astro.props;
 const Heading = level === 2 ? 'h2' : 'h3';
 ---
 
-<section class:list={['mt-14 border-t border-line pt-8', className]}>
-  <Heading class="label text-ash-dim">{label}</Heading>
-  <div class="mt-6">
+<section id={id} class:list={['mt-16 scroll-mt-24 border-t border-line pt-8', className]}>
+  {kicker && <p class="label mb-4 text-ash-dim">{kicker}</p>}
+  <Heading
+    class:list={[
+      'font-display text-section font-medium text-balance',
+      level === 2 ? 'text-bone' : 'text-ash',
+    ]}
+  >
+    {label}
+  </Heading>
+  <div class="mt-7">
     <slot />
   </div>
 </section>

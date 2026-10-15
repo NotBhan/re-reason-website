@@ -56,6 +56,17 @@ src/
     sections/               the homepage's five sections
     motion/                 StateLattice.astro (Anime.js), Findings.tsx (Motion island)
     research/               shared research-page components
+      PageHeader.astro      title, summary, metadata row
+      ContentsNav.astro     "on this page", for long detail pages
+      Section.astro         the standard section: rule, mid-register heading, content
+      EvidencePairs.astro   establishes / does not establish
+      ResultRows.astro      measured results as a definition list
+      PointList.astro       held-fixed conditions, procedure steps, limitations
+      ResearchFigure.astro  figure plate, caption, context, sources
+      SourceList.astro      source documents and artifacts
+      RelatedEntries.astro  cross-references to other entries
+      Prose.astro           styles the rendered markdown body
+      Breadcrumbs.astro
     layout/                 header and footer
     ui/                     reused primitives
   lib/
@@ -169,10 +180,30 @@ The scale runs from an 11px tracked label to a 104px display size, all fluid
 
 ### Utilities
 
-`shell` (container), `section-pad` (vertical rhythm), `measure` / `measure-tight`
-/ `measure-wide` (line length), `label` (tracked uppercase technical label),
-`mono` (monospace **without** the uppercase transform — use it for anything whose
-spelling carries meaning, such as a file path), `rule` (hairline).
+`shell` (container), `section-pad` (vertical rhythm), `label` (tracked uppercase
+technical label), `mono` (monospace **without** the uppercase transform — use it for
+anything whose spelling carries meaning, such as a file path), `rule` (hairline).
+
+Reading measures, and which to use where:
+
+| Utility | Width | Use |
+| --- | --- | --- |
+| `measure-tight` | 34ch | captions in a narrow column |
+| `measure` | 46ch | homepage leads, where a narrow block beside a diagram is the point |
+| `measure-wide` | 62ch | page summaries and figure captions |
+| `measure-read` | 68ch | research page body text, which is read at length |
+
+A 46-character line is below the 60–75 that reads comfortably, so `measure` is
+deliberately not used for research prose.
+
+### The heading register
+
+The type scale carries a `--text-section` step (20 → 28px) between `--text-lead`
+and `--text-title`. It exists because research pages had only two meaningful steps
+— a 71px page title and a 12px tracked label — which made a document's structure
+unscannable: every section marker looked identical to the metadata above it and to
+the next one. `Section.astro` and the markdown prose `h2` both use it, so a section
+heading and a prose heading are the same size, as they should be.
 
 ## Rendering model
 

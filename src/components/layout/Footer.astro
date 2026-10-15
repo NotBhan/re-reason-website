@@ -18,10 +18,16 @@ const year = new Date().getFullYear();
       <nav aria-label="Sections, repeated" class="lg:col-span-4 lg:col-start-9">
         <ol class="grid gap-3">
           {
+            /*
+              Rooted anchors, not bare fragments. The section ids only exist on
+              the homepage, so `#premise` was a dead link on every research page.
+              `/#premise` resolves from both: same-document on the homepage, and
+              a navigation home from anywhere else.
+            */
             SECTIONS.map((section) => (
               <li>
                 <a
-                  href={`#${section.id}`}
+                  href={`/#${section.id}`}
                   class="label text-ash-dim transition-colors duration-200 ease-out hover:text-bone"
                 >
                   <span class="tabular mr-3">{section.number}</span>
@@ -43,7 +49,7 @@ const year = new Date().getFullYear();
       </div>
 
       <a
-        href="#top"
+        href="/#top"
         class="label shrink-0 self-start text-ash transition-colors duration-200 ease-out hover:text-bone"
       >
         {FOOTER.backToTop} <span aria-hidden="true">&uarr;</span>

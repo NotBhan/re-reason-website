@@ -81,7 +81,6 @@ const LAST_STEP = STEPS - 1;
       <desc>{description}</desc>
 
       <g data-reveal="rule">
-        <line class="lattice-rule" x1="0" y1="6" x2={WIDTH} y2="6"></line>
         <line class="lattice-rule" x1="0" y1={Y0 - 18} x2={WIDTH} y2={Y0 - 18}></line>
       </g>
 
@@ -155,12 +154,40 @@ const LAST_STEP = STEPS - 1;
     </svg>
   </div>
 
-  <div class="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+  {/*
+    The legend sits directly under the plate, inside the component, because it is
+    the diagram's own key. It carries three entries, not two: the accent used for
+    the writes committed at the final step was previously unexplained, which left
+    the orange cells reading as a third, undocumented state.
+  */}
+  <ul class="mt-6 flex flex-col gap-3">
+    {
+      STRUCTURE.diagram.legend.map((item) => (
+        <li class="flex items-baseline gap-4">
+          <span
+            class:list={[
+              'mt-1 block size-2.5 shrink-0 border',
+              item.mark === 'hold' && 'border-line-hi',
+              item.mark === 'move' && 'border-cell bg-cell',
+              item.mark === 'committed' && 'border-signal bg-signal',
+            ]}
+            aria-hidden="true"
+          />
+          <span class="min-w-0">
+            <span class="label text-ash">{item.mark}</span>
+            <span class="ml-3 text-caption text-ash-dim">{item.meaning}</span>
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line pt-5">
     <p class="label text-ash-dim">{disclaimer}</p>
     <button
       type="button"
       data-lattice-replay
-      class="label border border-control px-3 py-2 text-ash transition-colors duration-200 ease-out hover:border-signal hover:text-bone"
+      class="label whitespace-nowrap border border-control px-3 py-2 text-ash transition-colors duration-200 ease-out hover:border-signal hover:text-bone"
     >
       {STRUCTURE.replayLabel}
     </button>

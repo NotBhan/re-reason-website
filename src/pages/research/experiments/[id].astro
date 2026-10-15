@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Breadcrumbs from '@/components/research/Breadcrumbs.astro';
+import ContentsNav from '@/components/research/ContentsNav.astro';
 import EvidencePairs from '@/components/research/EvidencePairs.astro';
 import PageHeader from '@/components/research/PageHeader.astro';
 import PointList from '@/components/research/PointList.astro';
@@ -29,6 +30,37 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 const data = entry.data;
 const related = await resolveRelated(data.related);
+
+/*
+  One source for section labels. The contents nav and the sections themselves
+  both read from here, so a heading cannot be renamed in one place and left
+  stale in the other, and the anchor ids cannot drift from the nav targets.
+*/
+const S = {
+  question: { id: 'research-question', label: 'Research question' },
+  motivation: { id: 'motivation', label: 'Motivation' },
+  frozen: { id: 'held-fixed', label: 'Held fixed' },
+  procedure: { id: 'procedure', label: 'Procedure' },
+  results: { id: 'results', label: 'Results' },
+  limitations: { id: 'limitations', label: 'Limitations' },
+  next: { id: 'next-step', label: 'Next step' },
+  sources: { id: 'source-report', label: 'Source report' },
+  artifacts: { id: 'artifacts', label: 'Reproducibility artifacts' },
+  related: { id: 'related', label: 'Related' },
+} as const;
+
+const contents = [
+  S.question,
+  S.motivation,
+  S.frozen,
+  S.procedure,
+  S.results,
+  S.limitations,
+  ...(data.nextStep ? [S.next] : []),
+  S.sources,
+  ...(data.artifacts.length > 0 ? [S.artifacts] : []),
+  S.related,
+];
 ---
 
 <ResearchLayout
@@ -55,36 +87,38 @@ const related = await resolveRelated(data.related);
     ]}
   />
 
-  <Section label="Research question">
-    <p class="measure-wide font-display text-lead text-bone">{data.question}</p>
+  <ContentsNav items={contents} />
+
+  <Section id={S.question.id} label={S.question.label}>
+    <p class="measure-read font-display text-lead text-bone">{data.question}</p>
   </Section>
 
-  <Section label="Motivation">
-    <p class="measure-wide text-body text-ash">{data.motivation}</p>
+  <Section id={S.motivation.id} label={S.motivation.label}>
+    <p class="measure-read text-body text-ash">{data.motivation}</p>
   </Section>
 
-  <Section label="Held fixed">
+  <Section id={S.frozen.id} label={S.frozen.label}>
     <PointList items={data.frozen} />
   </Section>
 
-  <Section label="Procedure">
+  <Section id={S.procedure.id} label={S.procedure.label}>
     <PointList items={data.procedure} ordered />
   </Section>
 
-  <Section label="Results">
+  <Section id={S.results.id} label={S.results.label}>
     <ResultRows rows={data.results} />
   </Section>
 
   <EvidencePairs establishes={data.establishes} doesNotEstablish={data.doesNotEstablish} />
 
-  <Section label="Limitations">
+  <Section id={S.limitations.id} label={S.limitations.label}>
     <PointList items={data.limitations} />
   </Section>
 
   {
     data.nextStep && (
-      <Section label="Next step">
-        <p class="measure-wide text-body text-ash">{data.nextStep}</p>
+      <Section id={S.next.id} label={S.next.label}>
+        <p class="measure-read text-body text-ash">{data.nextStep}</p>
       </Section>
     )
   }
@@ -106,13 +140,13 @@ const related = await resolveRelated(data.related);
     <Content />
   </Prose>
 
-  <Section label="Source report">
+  <Section id={S.sources.id} label={S.sources.label}>
     <SourceList refs={data.sources} dense />
   </Section>
 
   {
     data.artifacts.length > 0 && (
-      <Section label="Reproducibility artifacts">
+      <Section id={S.artifacts.id} label={S.artifacts.label}>
         <SourceList refs={data.artifacts} />
       </Section>
     )

@@ -213,7 +213,6 @@ export interface StructureContent {
 export const STRUCTURE: StructureContent = {
   eyebrow: 'Structure',
   heading: 'A state update, coordinate by coordinate.',
-
   /** PROVISIONAL framing over verified mechanism findings. */
   intro:
     'The active model commits with a bounded convex update. Each coordinate of the state either holds its previous value or moves toward the candidate, decided independently by that coordinate’s gate value.',
@@ -265,8 +264,12 @@ export const STRUCTURE: StructureContent = {
     description:
       'Ten columns, one per step, and eight rows, one per state coordinate. A filled cell means the gate for that coordinate moved the state toward the candidate at that step; an empty cell means the coordinate held its previous value. The pattern renders the update rule and is not logged experimental data.',
     legend: [
-      { mark: 'hold', meaning: 'gate near 0 — coordinate keeps its value' },
-      { mark: 'move', meaning: 'gate near 1 — coordinate takes the candidate' },
+      { mark: 'hold', meaning: 'gate near 0 — the coordinate keeps its value' },
+      { mark: 'move', meaning: 'gate near 1 — it takes the candidate' },
+      {
+        mark: 'committed',
+        meaning: 'the writes committed at the final step, once the sequence has settled',
+      },
     ],
     disclaimer: 'Rendering of the update rule. Not logged data.',
   },

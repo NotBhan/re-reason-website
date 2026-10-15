@@ -1,0 +1,44 @@
+---
+// Contents for a long research page.
+//
+// Research detail pages run to several thousand pixels across eight to twelve
+// sections, and until now the only wayfinding was scrolling. This gives the
+// document a contents block the way a paper has one, which also tells a reader
+// up front how the argument is structured.
+//
+// Deliberately not sticky and not a sidebar: making it sticky would either
+// squeeze the content column, shrinking the figures that are the evidence, or
+// overlay them. A contents block at the top costs nothing and is honest about
+// what it is.
+interface Item {
+  id: string;
+  label: string;
+}
+
+interface Props {
+  items: ReadonlyArray<Item>;
+}
+
+const { items } = Astro.props;
+---
+
+<nav aria-label="On this page" class="mt-14 border-t border-line pt-8">
+  <p class="label text-ash-dim">On this page</p>
+  <ol class="mt-5 grid gap-x-16 gap-y-2 sm:grid-cols-2">
+    {
+      items.map((item, index) => (
+        <li>
+          <a
+            href={`#${item.id}`}
+            class="group flex items-baseline gap-4 py-1 text-caption text-ash transition-colors duration-200 ease-out hover:text-bone"
+          >
+            <span class="label tabular text-line-hi transition-colors duration-200 ease-out group-hover:text-signal">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <span>{item.label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>

@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Breadcrumbs from '@/components/research/Breadcrumbs.astro';
+import ContentsNav from '@/components/research/ContentsNav.astro';
 import Formula from '@/components/ui/Formula.astro';
 import PageHeader from '@/components/research/PageHeader.astro';
 import PointList from '@/components/research/PointList.astro';
@@ -28,6 +29,27 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 const data = entry.data;
 const related = await resolveRelated(data.related);
+
+/** One source for section labels; the nav and the sections both read from it. */
+const S = {
+  purpose: { id: 'purpose', label: 'Purpose' },
+  rule: { id: 'update-rule', label: 'Update rule' },
+  components: { id: 'components', label: 'Components' },
+  constraints: { id: 'constraints', label: 'Constraints' },
+  questions: { id: 'open-questions', label: 'Open questions' },
+  sources: { id: 'source-documents', label: 'Source documents' },
+  related: { id: 'related', label: 'Related' },
+} as const;
+
+const contents = [
+  S.purpose,
+  ...(data.updateRule ? [S.rule] : []),
+  S.components,
+  ...(data.constraints.length > 0 ? [S.constraints] : []),
+  ...(data.openQuestions.length > 0 ? [S.questions] : []),
+  S.sources,
+  S.related,
+];
 
 const IMPLEMENTATION_LABEL: Record<'implemented' | 'not-implemented', string> = {
   implemented: 'Implemented',
@@ -60,7 +82,7 @@ const IMPLEMENTATION_LABEL: Record<'implemented' | 'not-implemented', string> = 
 
   {
     data.implementation === 'not-implemented' && (
-      <p class="measure-wide mt-12 border-l border-signal pl-5 text-body text-ash">
+      <p class="measure-read mt-12 border-l border-signal pl-5 text-body text-ash">
         This design was specified and then not built. It is published because the reasons it
         was set aside are part of the project's result, not because it describes a running
         system.
@@ -68,38 +90,39 @@ const IMPLEMENTATION_LABEL: Record<'implemented' | 'not-implemented', string> = 
     )
   }
 
-  <Section label="Purpose">
-    <p class="measure-wide text-body text-ash">{data.purpose}</p>
+  <ContentsNav items={contents} />
+
+  <Section id={S.purpose.id} label={S.purpose.label}>
+    <p class="measure-read text-body text-ash">{data.purpose}</p>
   </Section>
 
   {
     data.updateRule && (
-      <Section label="Update rule">
-        <Formula
-          tokens={data.updateRule}
-          class="tabular block font-mono text-lead text-bone"
-        />
+      <Section id={S.rule.id} label={S.rule.label}>
+        <Formula tokens={data.updateRule} class="tabular block font-mono text-lead text-bone" />
         {data.updateRuleNote && (
-          <p class="measure-wide mt-5 text-caption text-ash-dim">{data.updateRuleNote}</p>
+          <p class="measure-read mt-5 text-caption text-ash-dim">{data.updateRuleNote}</p>
         )}
       </Section>
     )
   }
 
-  <Section label="Components">
+  <Section id={S.components.id} label={S.components.label}>
     <dl class="border-t border-line">
-      {data.components.map((component) => (
-        <div class="grid gap-x-16 gap-y-3 border-b border-line py-6 sm:grid-cols-[16rem_1fr]">
-          <dt class="font-display text-lead text-bone">{component.name}</dt>
-          <dd class="measure text-body text-ash">{component.detail}</dd>
-        </div>
-      ))}
+      {
+        data.components.map((component) => (
+          <div class="grid gap-x-16 gap-y-3 border-b border-line py-6 sm:grid-cols-[15rem_1fr]">
+            <dt class="font-display text-lead text-bone">{component.name}</dt>
+            <dd class="measure-read text-body text-ash">{component.detail}</dd>
+          </div>
+        ))
+      }
     </dl>
   </Section>
 
   {
     data.constraints.length > 0 && (
-      <Section label="Constraints">
+      <Section id={S.constraints.id} label={S.constraints.label}>
         <PointList items={data.constraints} />
       </Section>
     )
@@ -107,7 +130,7 @@ const IMPLEMENTATION_LABEL: Record<'implemented' | 'not-implemented', string> = 
 
   {
     data.openQuestions.length > 0 && (
-      <Section label="Open questions">
+      <Section id={S.questions.id} label={S.questions.label}>
         <PointList items={data.openQuestions} />
       </Section>
     )
@@ -130,7 +153,7 @@ const IMPLEMENTATION_LABEL: Record<'implemented' | 'not-implemented', string> = 
     <Content />
   </Prose>
 
-  <Section label="Source documents">
+  <Section id={S.sources.id} label={S.sources.label}>
     <SourceList refs={data.sources} />
   </Section>
 

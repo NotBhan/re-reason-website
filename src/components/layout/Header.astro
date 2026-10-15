@@ -29,13 +29,13 @@ const onResearch = path.startsWith('/research');
       RE<span class="text-signal">:</span>REASON
     </a>
 
-    <div class="flex items-center gap-5 sm:gap-7">
-      <nav aria-label="Primary" class="flex items-center gap-5 sm:gap-7">
+    <div class="flex items-center gap-3 sm:gap-7">
+      <nav aria-label="Primary" class="flex items-center gap-3 sm:gap-7">
         <a
           href={ROUTES.research}
           aria-current={onResearch ? 'true' : undefined}
           class:list={[
-            'label transition-colors duration-200 ease-out',
+            'label whitespace-nowrap transition-colors duration-200 ease-out',
             onResearch
               ? 'text-bone underline decoration-signal decoration-1 underline-offset-[6px]'
               : 'text-ash hover:text-bone',
@@ -50,7 +50,7 @@ const onResearch = path.startsWith('/research');
               {SECTIONS.map((section) => (
                 <a
                   href={`#${section.id}`}
-                  class="label text-ash transition-colors duration-200 ease-out hover:text-bone"
+                  class="label whitespace-nowrap text-ash transition-colors duration-200 ease-out hover:text-bone"
                 >
                   <span class="tabular mr-2 text-ash-dim">{section.number}</span>
                   {section.label}
@@ -61,12 +61,24 @@ const onResearch = path.startsWith('/research');
         }
       </nav>
 
+      {/*
+        whitespace-nowrap matters here. Without it the label and the arrow wrap
+        independently at narrow widths, which produced a three-line-tall button
+        inside a 64px header.
+
+        The label also shortens below sm. With the full word and nowrap, the
+        header overflowed a 360px viewport by ~19px: wordmark + Research +
+        "Repository" simply does not fit in 320px of usable width. "Repo" is the
+        conventional shorthand and is what the accessible name resolves to at
+        that width, since the hidden span is not rendered.
+      */}
       <ExternalLink
         href={LINKS.repository}
         cue={false}
-        class="label border border-control px-3 py-2 text-ash transition-colors duration-200 ease-out hover:border-signal hover:text-bone"
+        class="label whitespace-nowrap border border-control px-2.5 py-2 text-ash transition-colors duration-200 ease-out hover:border-signal hover:text-bone sm:px-3"
       >
-        Repository
+        <span class="sm:hidden">Repo</span>
+        <span class="hidden sm:inline">Repository</span>
         <span class="ml-1.5" aria-hidden="true">&nearr;</span>
       </ExternalLink>
     </div>

@@ -44,10 +44,26 @@ const segmentClass = (segment: Segment): Array<string | undefined> => [
       <Eyebrow label={HERO.eyebrow} />
     </div>
 
-    <h1 class="mt-10 max-w-[24ch] font-display text-mega font-normal text-balance sm:mt-14">
+    <h1 class="mt-8 font-display text-mega font-normal sm:mt-12">
       {
-        HERO.headline.map((line) => (
-          <span class="block">
+        /*
+          Each authored line is its own block. The middle line is indented from
+          the sm breakpoint up, which turns a flush-left stack of three lines
+          into a stepped composition: the headline steps in and back out, the
+          short middle line carries the indent, and the negative space to its
+          right becomes part of the layout rather than leftover margin. Below sm
+          the lines wrap, where an indent would compound the wrapping.
+
+          text-balance stays: on a narrow viewport a line does wrap, and balance
+          gives it an even rag instead of a long line followed by one word.
+        */
+        HERO.headline.map((line, index) => (
+          <span
+            class:list={[
+              'block text-balance',
+              index === 1 && 'sm:pl-[7vw] lg:pl-[9vw]',
+            ]}
+          >
             {line.map((segment) => (
               <span class:list={segmentClass(segment)}>{segment.text}</span>
             ))}

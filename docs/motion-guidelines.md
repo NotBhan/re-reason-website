@@ -125,7 +125,8 @@ Three independent defences, because any one of them can be bypassed:
      the committed writes carry the accent, because the accent rule keys off the
      *absence* of `data-anim` rather than off the timeline's completion
      attribute. The step markers stay hidden, since "current step" is meaningless
-     when nothing is running.
+     when nothing is running, and the legend explains the accent so the finished
+     state is still readable without having watched it arrive.
    - `Findings.tsx` uses `useReducedMotion()` to replace the layout spring and
      card transitions with zero-duration changes.
 
