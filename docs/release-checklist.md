@@ -4,8 +4,9 @@ State of the site's production readiness. Everything under **Verified** was
 actually run in this repository; everything under **Pending** needs a decision or
 a resource that does not exist yet.
 
-Last reviewed: 2026-10-15. Verification commands are given so each claim can be
-re-checked rather than taken on trust.
+Last reviewed: 2026-10-15 (Stage 7). Commands are given so each claim can be
+re-checked rather than taken on trust. Operational detail lives in
+[deployment.md](./deployment.md).
 
 ---
 
@@ -16,113 +17,124 @@ re-checked rather than taken on trust.
 | Check | Command | Result |
 | --- | --- | --- |
 | Type + template diagnostics | `npm run check` | 0 errors, 0 warnings, 0 hints |
-| Static production build, no origin | `npm run build` | 12 routes, succeeds, warns that it is domain-agnostic |
-| Static production build, origin set | `SITE_URL=https://<test> npm run build` | 12 routes, canonical/Open Graph/sitemap all emitted |
-| Build reproducibility | `rm -rf dist && npm run build` | Deterministic; documented commands |
+| Domain-agnostic build | `npm run build` (no `SITE_URL`) | 12 routes, succeeds, warns that it is incomplete |
+| Configured build | `SITE_URL=https://<test> npm run build` | 12 routes, canonical, Open Graph and sitemap emitted |
+| Release validation, both modes | `npm run verify:release` | Passes in domain-agnostic and configured modes |
+| Determinism | two builds, `diff -rq` | Byte-identical |
 
-### Domain-agnostic behaviour
+### URL configuration
 
-Verified by building with no `SITE_URL` and inspecting `dist/`:
+`SITE_URL` is read once, in `astro.config.mjs`; components take the origin from
+`Astro.site`. It is never exposed to client code, and the site reads no other
+environment variable.
 
-- No `<link rel="canonical">` and no `og:url` anywhere in the output.
-- No sitemap emitted. `@astrojs/sitemap` requires an origin, and the integration
-  is only registered when one is configured.
-- `robots.txt` emits `Disallow: /`, so an unconfigured build cannot be indexed by
-  mistake.
-- No placeholder domain appears in any emitted file. Checked for `example.*`,
-  `your-domain`, `localhost`, `127.0.0.1` and `:4321`.
-- A four-line warning is printed on every such build.
+Rejected, each with its own message: bare hostname, protocol-relative, plain
+`http` on a public host, a path, a query string, a non-http scheme, embedded
+credentials. Accepted: a bare `https` origin with an optional port, and
+`http://localhost` / `http://127.0.0.1` for local checks. An empty value counts as
+absent, so a CI variable that expands to nothing produces a domain-agnostic build
+rather than a broken one.
 
-### Configured behaviour
+### Canonical, Open Graph, sitemap, robots
 
-Verified by building with a throwaway origin (`https://example.invalid`), which is
-never persisted in any file:
+Verified in both modes by `scripts/verify-release.mjs` and by inspection:
 
-- Canonicals are absolute and carry the trailing slash: `/` and
-  `/research/experiments/<id>/`.
-- `og:url` and `og:image` use the configured origin; `og:image` is absolute.
-- `twitter:card` is `summary_large_image` with an image, `summary` without.
-- `robots.txt` emits `Allow: /` plus a `Sitemap:` line.
-- The sitemap contains exactly 12 URLs — one per generated route — with no
-  duplicates, all following the trailing-slash policy.
+- **Domain-agnostic:** no canonical, no `og:url`, no `og:image`, no sitemap;
+  `robots.txt` emits `Disallow: /`; no placeholder, filesystem or development URL
+  anywhere in the output.
+- **Configured:** canonical on all 12 pages, each on the configured origin, each
+  resolving to a real page, none carrying a query or fragment; `og:url` equal to
+  the canonical; `og:image` absolute; sitemap contains exactly the 12 built routes
+  with no duplicates and consistent trailing slashes; `robots.txt` allows crawling
+  and advertises the sitemap.
+- 12 distinct titles and 12 distinct descriptions, authored per route rather than
+  derived from headings.
+- All metadata is present in the static HTML; none of it depends on JavaScript.
 
-### URL validation
+### Release validator
 
-Each of these fails the build with a specific message rather than being
-normalised: plain hostname, protocol-relative, plain `http` on a public host,
-path, query string, unsupported scheme, embedded credentials. `http://localhost`
-and `http://127.0.0.1` are accepted; an empty value is treated as absent.
+`scripts/verify-release.mjs` (also `npm run verify:release`) checks a build in
+`dist/` and detects its mode from the output, so a domain-agnostic build is not
+failed for the canonical link it is supposed to omit. Expected routes are derived
+from the page templates and content collections, so the list cannot drift.
 
-### Static delivery contract
+Nine deliberate defects were injected into a copy of a passing build, and all nine
+were caught: corrupted figure bytes, a deleted font licence, a deleted symbol
+font, a deleted route, an injected placeholder origin, an unexpected draft route,
+a canonical pointing at a development server, an unfilled `TODO`, and a sitemap
+missing a route.
 
-| Check | Result |
+### Static output and preview
+
+Served with `python3 -m http.server --directory dist`, deliberately not Astro's
+preview, which already knows the intended routing.
+
+| Behaviour | Result |
 | --- | --- |
-| All twelve routes present | Yes |
-| Internal `href="/…"` links resolve to generated routes | 12 pages, 0 unresolved |
-| No filesystem paths, dev-server URLs or placeholder domains in HTML | None |
-| Font, figure, favicon, licence and social assets in `dist/` | All present |
-| Published figures | 6, hashes match — `node scripts/sync-figures.mjs --check` |
-| Rejected figures absent from `public/` and `dist/` | Both absent |
-| Distinct titles / descriptions | 12 / 12, no duplicates |
-| Research content without hydration | Present; 0 external scripts on research routes |
+| All 12 routes, both modes | 200 |
+| Bare path without a slash | **301 → the slash form** |
+| Fonts, licences, figures, `og.png`, `favicon.svg` | 200 |
+| Unknown paths | genuine **404** in both modes |
+| Sitemap | 200 configured, **404** when unconfigured |
+| `og.png` | `image/png`, 59,034 bytes, matching the generator's output |
 
-### Browser compatibility
+The 301 result is the one that matters: it is what the `TRAILING_SLASH = 'always'`
+policy assumes, and the one thing a host can realistically get wrong.
 
-| Engine | How | Coverage |
-| --- | --- | --- |
-| Chromium 153 | Chrome DevTools Protocol | 5 routes × 3 widths = 15 scenarios, all assertions passing |
-| WebKit (WebKitGTK 2.52.6) | `scripts/webkit-check.py` | 6 routes × 3 widths × 3 modes = 54 scenarios, all assertions passing |
-| Firefox 157 | headless capture, `ui.prefersReducedMotion=1` | Rendered-output check on 3 routes |
+Also verified: 0 unresolved internal links across 181 on 12 pages; no
+`file://` paths, filesystem paths or development URLs in the output; no
+development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
 
-Chromium and WebKit assert rather than eyeball: one `h1` per page, no horizontal
-overflow, no broken images, no dead in-page anchors, no console errors, no failed
-requests, and the state lattice reaching its finished state.
+### Fonts, licences and figures
 
-Firefox 157 no longer exposes a CDP endpoint and `geckodriver` is not installed, so
-it is checked through rendered output — captures confirmed non-blank, correctly
-sized, and containing the signal-orange accent. Firefox's assertion-level coverage,
-including reduced motion, dates from the Stage 4 pass.
-
-WebKit runs through the WebKit2-4.1 GObject bindings, because WebKitWebDriver is
-not shipped by this distribution's `webkit2gtk-4.1`:
-
-```bash
-npx astro preview --port 4322 --host 127.0.0.1 &
-python3 scripts/webkit-check.py
-```
-
-### Fonts and licensing
-
-- `public/fonts/licenses/` holds the SIL OFL text for each of the four families,
-  fetched from upstream and shipped beside the binaries.
-- Both font scripts fail with a clear message if the upstream licence text is
-  missing (404) or contains no OFL notice — tested both ways.
-- `scripts/fetch-fonts.mjs` downloads into place and prunes stale files
-  *afterwards*. Tested by pointing it at an unreachable upstream: it exits 1 and
-  leaves all 9 binaries, `SOURCES.json` and the licence files untouched, with
-  `re-symbols.woff2` byte-identical.
-- It deletes only files recorded in its own manifest, so it cannot remove the
-  symbol font or anything it did not write.
+- Four OFL texts ship in `public/fonts/licenses/` and reach `dist/`.
+- All 9 fonts referenced by the built stylesheet exist, including the
+  `re-symbols.woff2` maths subset.
+- Six published figures verify against `public/figures/SOURCES.json` by SHA-256
+  **and** byte length; `node scripts/sync-figures.mjs --check` reports 6/6.
+- `scripts/fetch-fonts.mjs` downloads into place and prunes afterwards. Pointed at
+  an unreachable upstream it exits 1 and leaves all 9 binaries, `SOURCES.json` and
+  the licence files untouched, with `re-symbols.woff2` byte-identical. A non-OFL
+  licence response and a 404ed licence each fail with a message naming the URL.
+- The social card regenerates identically, and its generator refuses to run if its
+  copy no longer matches `src/lib/site.ts` or `src/content/home.ts`.
 
 ### Research integrity
 
-- Both withheld figures remain absent from `public/` and `dist/`.
-- The disputed §10 description appears only in `docs/figures.md`, quoted as the
-  subject of the dispute — never as a finding.
+- Both withheld figures remain absent from `public/` and `dist/` — asserted
+  mechanically by the release validator, not just by inspection.
+- The disputed `mechanism_qa_diagnostic.md` §10 wording appears only in
+  [figures.md](./figures.md), quoted as the subject of the dispute. It is not
+  presented as a finding anywhere.
 - Phase 1.6 still states `FAILED its gate` and `accuracy 0.0000 (0/16) across all
-  five seeds`.
-- `speculative-pipeline` still states it was not built;
+  five seeds`; `speculative-pipeline` still states it was not built;
   `nonlinear-candidate-mgu` still states it is not implemented or pursued.
 - Experiment entries carry `establishes`, `doesNotEstablish` and limitations;
   architecture entries carry implementation status, constraints and open
-  questions; phase entries carry status, gate outcome and artifacts. The framing
-  differs by collection because the documents differ — none of them is missing.
+  questions; phase entries carry status, gate outcome and artifacts.
 - The lattice is labelled "Rendering of the update rule. Not logged data."
+
+### Browser verification
+
+| Engine | How | Coverage |
+| --- | --- | --- |
+| Chromium 153 | Chrome DevTools Protocol | 5 routes × 3 widths = **15/15 scenarios pass** |
+| WebKit (WebKitGTK 2.52.6) | `python3 scripts/webkit-check.py` | 6 routes × 3 widths × 3 modes = **54/54 scenarios pass** |
+| Firefox 157 | headless capture, `ui.prefersReducedMotion=1` | 4 routes: non-blank, correctly sized, accent present |
+
+Chromium and WebKit assert one `h1` per page, no horizontal overflow, no broken
+images, no dead in-page anchors, no console errors, no failed requests, reduced
+motion and no-JavaScript completeness, and the lattice reaching its finished
+state with `data-ready` set.
+
+**Firefox is not assertion-level.** Firefox 157 exposes no CDP endpoint and
+`geckodriver` is not installed, so its coverage is rendered output only. A
+non-blank screenshot is not equivalent to a passing assertion suite.
 
 ### Repository hygiene
 
 - `.commandcode/` is ignored by one precise rule; no source, asset, licence or
-  script file is caught by it. Verified with `git check-ignore`.
+  script is caught by it.
 - No build output, `node_modules` or environment file is tracked.
 
 ---
@@ -131,84 +143,80 @@ python3 scripts/webkit-check.py
 
 ### 1. Production domain
 
-Blocking canonical URLs, Open Graph URLs, the sitemap and the robots `Sitemap:`
-line. Nothing in the repository invents one.
+The last metadata decision. Everything else is built: `SITE_URL=https://<domain>
+npm run build` and canonical URLs, Open Graph URLs, the sitemap and the robots
+`Sitemap:` line all follow. Nothing in the repository invents a domain.
 
-When chosen: `SITE_URL=https://<domain> npm run build`. Nothing else changes —
-there is no second place the origin is configured.
+### 2. Hosting provider
 
-### 2. Trailing-slash policy
+Not selected, and no provider configuration is committed. The nine requirements
+the provider must satisfy are in
+[deployment.md](./deployment.md#deployment-provider-requirements). Each maps to
+something verified locally; none requires an application change.
 
-`src/lib/site-url.ts` records it as `TRAILING_SLASH = 'always'`, matching the
-emitted file layout where every route is a directory index. Astro's
-`trailingSlash` stays at its default `'ignore'`.
+### 3. Trailing-slash policy
 
-This is settled *provisionally* and needs one confirmation at deploy time: the
-host must not redirect `/x/` to `/x`. If it does, change `TRAILING_SLASH` to
-`'never'` and set `trailingSlash: 'never'` to match. See
-[deployment.md](./deployment.md).
+`TRAILING_SLASH = 'always'` in `src/lib/site-url.ts`, matching the emitted file
+layout and the observed 301 behaviour of a plain static server. Still provisional,
+because it is only wrong if the chosen host redirects `/x/` *to* `/x`. If it does,
+change `TRAILING_SLASH` to `'never'` and set `trailingSlash: 'never'` to match.
 
-### 3. Deployment provider
-
-Not selected, and no provider-specific configuration is committed — `dist/` is
-plain static output that any host accepts. [deployment.md](./deployment.md)
-states the contract: static root, HTTPS, single canonical host, trailing slashes
-preserved, genuine 404 status, no rewrite rules.
-
-### 4. Preview-environment protection
+### 4. Preview protection
 
 Recommended: do not set `SITE_URL` on preview deployments, so they emit
-`Disallow: /` automatically — and protect them at the host as well, because
-`robots.txt` is a crawler request, not access control.
+`Disallow: /` — and protect them at the host as well, because `robots.txt` is a
+request to compliant crawlers, not access control. A preview must not be treated
+as private merely because it is disallowed.
 
-### 5. Social preview image
+### 5. Push
 
-`public/og.png` exists and is generated by `scripts/build-og-image.mjs`. Its
-absolute URL is emitted only once `SITE_URL` is configured.
-
-### 6. Push
-
-`main` is ahead of `origin/main`. Nothing has been pushed.
+`main` is level with `origin/main`. Nothing is unpushed.
 
 ---
 
-## Pending — research action
+## Pending — research
 
-### Withheld figures
+Two figures stay unpublished: `03_gate_distribution.png` and
+`experiment_g_prediction.png`. The conflict, source section, artifact, required
+evidence and republication condition for each are recorded in
+[figures.md](./figures.md).
 
-`03_gate_distribution.png` and `experiment_g_prediction.png` stay unpublished. Each
-figure's conflict, source section, artifact, required evidence and republication
-condition are recorded in [figures.md](./figures.md).
-
-This needs the research owner to inspect the authoritative experiment outputs. It
-cannot be resolved from this repository, and the site must not decide which of the
-two artifacts is wrong by assumption. The site can ship without these figures —
-they are two of eight candidates, and the six published ones are unaffected.
+This needs the original experiment owner to inspect the authoritative outputs. The
+site cannot decide which artifact is wrong, and excluding the figures does not
+resolve the discrepancy — it only avoids publishing an unresolved claim. Nothing
+in this release depends on those two figures: the six published ones are
+unaffected.
 
 ---
 
-## Pending — release action
+## Pending — release
 
-- Produce the first release build with a real `SITE_URL`.
-- Smoke-test the live site: canonical and Open Graph values, sitemap reachable,
-  fonts and figures loading, the homepage island working.
-- Re-run `python3 scripts/webkit-check.py` against the deployed origin, so
-  HTTPS delivery and any host rewrite rules are exercised rather than assumed.
-- Confirm the host serves a genuine 404 status for unknown paths.
-- Confirm the host does not redirect `/x/` to `/x` (see decision 2).
-- Performance measurement on the live site. Layout shift was measured locally at
-  CLS 0.00552 on the homepage and 0.00000–0.00001 on research routes; no
-  Lighthouse-equivalent tooling is installed here, so no scores are claimed.
+| Step | Needs |
+| --- | --- |
+| Domain and DNS | The domain decision |
+| Production build | `SITE_URL` exported in the build environment |
+| Host redirect behaviour | A deployed host — the 301 test in [deployment.md](./deployment.md#post-deployment-acceptance-tests) |
+| 404 status | A deployed host |
+| HTTPS and canonical-host redirect | Provider configuration |
+| Preview deployment | Provider selection |
+| Live smoke tests | A deployed URL |
+| Browser re-run against the deployed origin | A deployed URL; use `SITE_PORT` with the WebKit harness |
+| Final approval | A human decision |
 
 ---
 
 ## Not claimed
 
-- The site is **not** release-ready in the sense of being deployable today: the
-  domain decision is outstanding, and until it is made the build is
-  deliberately incomplete rather than wrong.
-- No performance score is asserted — only the layout-shift figures above, which
-  were measured under stated conditions.
-- Firefox coverage in the current stage is rendered-output only, not assertions.
+- The site is **not** production-ready in the sense of being deployable today:
+  the domain and host decisions are outstanding, and until they are made the
+  build is deliberately incomplete rather than wrong.
+- Host redirect, 404 and HTTPS behaviour is **unverified in production**. It was
+  observed on a local static server, which is not the same thing.
+- No performance score is asserted. Layout shift was measured locally at CLS
+  0.00552 on the homepage and 0.00000–0.00001 on research routes; no
+  Lighthouse-equivalent tooling is installed here.
+- Reproducibility is claimed only for two consecutive builds on this machine and
+  toolchain, not across Node or OS versions.
+- Firefox coverage is rendered-output only, not assertions.
 - Two of eight candidate figures remain unpublished pending research
   reconciliation.

@@ -67,8 +67,10 @@ src/components/sections/     the homepage's five sections
 src/components/research/     shared research-page components
 src/components/motion/       the Anime.js lattice and the React island
 src/components/ui/           reused primitives
-scripts/                     font and figure tooling (run by hand, not at build time)
-                             webkit-check.py drives WebKitGTK for browser verification
+scripts/                     font, figure and social-card tooling
+                             (run by hand, not at build time)
+                             webkit-check.py drives WebKitGTK for browser checks
+                             verify-release.mjs audits a build in dist/
 docs/                        architecture, typography, content model, figures,
                              motion, deployment, release readiness
 ```

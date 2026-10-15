@@ -197,39 +197,170 @@ Graph URL.
 
 ---
 
-## Verifying a release build
+## Release procedure
 
-Domain-agnostic mode — no fabricated URLs, no sitemap, robots disallows:
+Run in order. Steps 1–9 are platform-independent and can all be done now; step 10
+needs a provider.
 
 ```bash
+# 1. Install exactly what the lockfile pins.
+#    If NODE_ENV=production is exported, add --include=dev (see "The build").
+npm ci
+
+# 2. Static diagnostics. Expect 0 errors, 0 warnings, 0 hints.
 npm run check
+
+# 3. Domain-agnostic build. Must succeed and must stay incomplete-but-correct.
+unset SITE_URL
 npm run build
-grep -rl "canonical\|og:url" dist/ || echo "no absolute URLs (expected)"
-test -f dist/sitemap-0.xml && echo "unexpected sitemap" || echo "no sitemap (expected)"
-```
+node scripts/verify-release.mjs --expect=domain-agnostic
 
-Configured mode, with a throwaway origin. **Never** build a release with a
-placeholder: use this only to verify, then rebuild without it.
+# 4. Configured build, with a synthetic origin, to prove the wiring.
+SITE_URL=https://rc-test.example.invalid npm run build
+node scripts/verify-release.mjs --expect=configured --origin=https://rc-test.example.invalid
 
-```bash
-SITE_URL=https://example.invalid npm run build
-grep -o '<link rel="canonical"[^>]*>' dist/index.html
-grep -c "<loc>" dist/sitemap-0.xml     # expect 12
-cat dist/robots.txt
-```
+# 5. Diagnostics and provenance that the release validator does not cover.
+node scripts/sync-figures.mjs --check
 
-Malformed values must fail:
-
-```bash
-SITE_URL=http://example.invalid npm run build   # expect a non-zero exit
-SITE_URL=my-domain.org npm run build            # expect a non-zero exit
-```
-
-Browser verification, if the WebKit/PyGObject stack is present:
-
-```bash
+# 6. Browser verification (see below for prerequisites).
 npx astro preview --port 4322 --host 127.0.0.1 &
 python3 scripts/webkit-check.py
+
+# 7. Serve the generated output with an independent static server.
+python3 -m http.server 4400 --directory dist --bind 127.0.0.1
+#    …and check it per "Preview validation" below.
+
+# 8. Rebuild for real. Never ship the synthetic-origin build.
+unset SITE_URL   # or export the real origin
+npm run build
+node scripts/verify-release.mjs
+
+# 9. Inspect the output directory by hand before uploading.
+ls -R dist | head -40
+
+# 10. Deploy, then run the acceptance tests at the end of this document.
+```
+
+`npm run verify:release` is a shortcut for step 3/4/8's validator when you do not
+need to assert a mode; it detects the mode from the output.
+
+### Determinism
+
+Two consecutive builds with the same `SITE_URL` produce byte-identical output,
+verified with `diff -rq` over the whole tree. Nothing embeds a build timestamp:
+the sitemap carries no `<lastmod>`, and asset filenames are content hashes.
+
+That is a same-machine, same-toolchain result. It is not a claim about
+reproducibility across Node versions or operating systems, which has not been
+tested.
+
+### Prerequisites for browser verification
+
+`scripts/webkit-check.py` needs PyGObject (`python3-gi`) and `webkit2gtk-4.1`.
+WebKitWebDriver is *not* needed — the harness drives a `WebKit2.WebView` inside a
+`Gtk.OffscreenWindow` through the GObject bindings, so nothing is drawn on screen.
+If that stack is missing, skip step 6 and record that WebKit is unverified rather
+than claiming it passed. Nothing in the release validator depends on it.
+
+---
+
+## Preview validation
+
+Astro's `astro preview` is not a neutral test of the output: it knows the routing
+the build intended. Serve `dist/` with something that knows nothing about Astro,
+so the result reflects what a plain static host will do.
+
+```bash
+python3 -m http.server 4400 --directory dist --bind 127.0.0.1
+```
+
+Verified against both build modes:
+
+| Request | Domain-agnostic build | Configured build |
+| --- | --- | --- |
+| `/` | 200 | 200 |
+| `/research/` | 200 | 200 |
+| `/research/experiments/<id>/` | 200 | 200 |
+| `/research/experiments/<id>` (no slash) | — | **301 → `/research/experiments/<id>/`** |
+| `/fonts/*.woff2`, `/fonts/licenses/*.txt` | 200 | 200 |
+| `/figures/*.png`, `/og.png`, `/favicon.svg` | 200 | 200 |
+| `/robots.txt` | 200, `Disallow: /` | 200, `Allow: /` + `Sitemap:` |
+| `/sitemap-index.xml` | **404** | 200 |
+| `/no-such-page/` | **404** | **404** |
+
+Two results matter beyond "the files are served":
+
+- **The bare path redirects to the trailing-slash form with a 301.** This is what
+  the `TRAILING_SLASH = 'always'` policy assumes, and it is the single behaviour a
+  host can realistically get wrong. A host that instead redirects `/x/` *to* `/x`
+  would make every canonical a redirect — see "Trailing slashes".
+- **Unknown paths return a genuine 404.** No SPA fallback: an unknown path does
+  not resolve to a 200.
+
+Both were observed on a local server. Neither has been verified against a
+production host, because none has been selected.
+
+---
+
+## Deployment provider requirements
+
+The provider must satisfy these. They are few, and each maps to something already
+verified locally.
+
+| # | Requirement | Why |
+| --- | --- | --- |
+| 1 | Serve `dist/` as a static root, resolving directory URLs to `index.html` | Every route is a directory index |
+| 2 | Do not redirect `/x/` to `/x` | Canonicals and sitemap entries all carry the trailing slash |
+| 3 | Return a genuine 404 status for unknown paths | A `200` fallback would make every typo indexable |
+| 4 | Serve `/fonts/**`, `/figures/**`, `/og.png`, `/favicon.svg` | Referenced by the stylesheet and by metadata |
+| 5 | Serve `/fonts/licenses/**` | OFL requires the notices to travel with the binaries |
+| 6 | Supply `SITE_URL` at build time | Canonical, Open Graph and sitemap generation depend on it |
+| 7 | Not set `SITE_URL` on preview deployments, and protect them at the host layer | Unconfigured builds emit `Disallow: /`, but robots is not access control |
+| 8 | HTTPS, with the eventual domain attached and a single canonical host | `SITE_URL` must be `https://`, and two hosts split the canonical signal |
+| 9 | Permit HTTPS requests after deployment | For the acceptance tests below |
+
+Nothing else is required. There is no server runtime, no adapter, no rewrite
+rule, no redirect table and no environment beyond `SITE_URL`.
+
+---
+
+## Post-deployment acceptance tests
+
+Run against the preview URL, then against production. These are the checks that
+cannot be done without a real host — the hosted redirect and status behaviour is
+exactly what the local server cannot prove.
+
+```bash
+BASE=https://<preview-or-production-host>
+
+# 3. Trailing slash: must redirect to the slash form, not away from it.
+curl -sI "$BASE/research/" | head -1                 # 200
+curl -sI "$BASE/research"  | grep -i '^location'     # → /research/
+
+# 2. Canonical agrees with the host, and is not a redirect target.
+curl -s "$BASE/research/" | grep -o '<link rel="canonical"[^>]*>'
+curl -sI "$(<canonical href above>)"> | head -1      # must be 200, not 301
+
+# 3. Unknown paths are a real 404, not a 200 fallback.
+curl -s -o /dev/null -w '%{http_code}\n' "$BASE/no-such-page/"     # 404
+
+# 4/5. Assets and licence notices.
+for p in /og.png /favicon.svg /fonts/re-symbols.woff2 /fonts/licenses/archivo-OFL.txt; do
+  curl -s -o /dev/null -w "%{http_code} $p\n" "$BASE$p"
+done
+
+# 6. Canonical host and HTTPS.
+curl -sI "http://<apex-domain>" | grep -iE '^(HTTP|location)'
+
+# Preview only: confirm it is not indexable.
+curl -s "$BASE/robots.txt"
+```
+
+Then re-run the browser harness against the deployed origin, so HTTPS delivery and
+any host rewrites are exercised rather than assumed:
+
+```bash
+SITE_PORT=443 python3 scripts/webkit-check.py   # adjust for the real host
 ```
 
 ---
