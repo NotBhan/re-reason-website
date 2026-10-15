@@ -19,6 +19,25 @@ third-party subsetting or re-encoding is applied to them.
 The symbol subset's licence is not taken on trust: `scripts/build-symbol-font.mjs`
 reads the OFL notice out of the font's own name table and aborts if it is absent.
 
+### Licence files ship with the binaries
+
+Self-hosting webfonts is redistribution, and the OFL requires the copyright
+notice and licence text to accompany the Font Software — modified or not, which
+also covers the subsetted symbol font. Each family's `OFL.txt` is therefore stored
+verbatim in `public/fonts/licenses/`:
+
+| File | Family |
+| --- | --- |
+| `archivo-OFL.txt` | Archivo © 2020 The Archivo Project Authors |
+| `source-serif-4-OFL.txt` | Source Serif 4 © 2014 The Source Serif 4 Project Authors |
+| `jetbrains-mono-OFL.txt` | JetBrains Mono © 2020 The JetBrains Mono Project Authors |
+| `noto-sans-math-OFL.txt` | Noto Sans Math © 2022 The Noto Project Authors |
+
+Both font scripts fetch these from the upstream repository and refuse to
+complete if the licence text is missing or contains no OFL notice, so a future
+regeneration cannot silently drop them. `public/fonts/SOURCES.json` lists them
+alongside the binaries.
+
 Both scripts verify their own output. `fetch-fonts.mjs` records every upstream
 URL in `public/fonts/SOURCES.json`; `build-symbol-font.mjs` asserts all 15
 requested codepoints survive subsetting *and* that the encoded WOFF2 round-trips

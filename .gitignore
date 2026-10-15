@@ -22,3 +22,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Command Code's own local state: one editor setting and the taste files it
+# learns and rewrites on its own. Tool state, not project source — the
+# conventions it encodes are documented in docs/ and maintained by hand there.
+.commandcode/

@@ -68,8 +68,14 @@ src/components/research/     shared research-page components
 src/components/motion/       the Anime.js lattice and the React island
 src/components/ui/           reused primitives
 scripts/                     font and figure tooling (run by hand, not at build time)
-docs/                        architecture, typography, content model, figures, motion
+                             webkit-check.py drives WebKitGTK for browser verification
+docs/                        architecture, typography, content model, figures,
+                             motion, release readiness
 ```
+
+[`docs/release-checklist.md`](docs/release-checklist.md) records what is verified
+and what is still waiting on a decision — chiefly the production domain, which
+nothing in the repository invents.
 
 ## Before changing anything
 

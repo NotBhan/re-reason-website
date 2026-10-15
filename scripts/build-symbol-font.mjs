@@ -22,7 +22,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +33,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = {
   family: 'Noto Sans Math',
   url: 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansmath/NotoSansMath-Regular.ttf',
+  licenseUrl: 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansmath/OFL.txt',
+  licenseFile: 'noto-sans-math-OFL.txt',
   licence: 'SIL Open Font License 1.1',
   repo: 'https://github.com/google/fonts/tree/main/ofl/notosansmath',
 };
@@ -175,6 +177,26 @@ async function main() {
     console.log(
       `wrote public/fonts/${name} — ${bytes.length} bytes, ${CODEPOINTS.length}/${CODEPOINTS.length} codepoints present`,
     );
+
+    /*
+      Ship the licence with the binary.
+
+      Subsetting is modification, and the SIL OFL requires the copyright notice
+      and licence text to accompany the Font Software in any form it is
+      redistributed — modified or not.
+    */
+    const licenseDir = join(ROOT, 'public', 'fonts', 'licenses');
+    await mkdir(licenseDir, { recursive: true });
+    const licenseRes = await fetch(SOURCE.licenseUrl);
+    if (!licenseRes.ok) {
+      throw new Error(`licence text unavailable (${licenseRes.status}) from ${SOURCE.licenseUrl}`);
+    }
+    const licenseText = await licenseRes.text();
+    if (!/SIL OPEN FONT LICENSE/i.test(licenseText)) {
+      throw new Error(`${SOURCE.licenseUrl} does not contain an OFL notice`);
+    }
+    await writeFile(join(licenseDir, SOURCE.licenseFile), licenseText);
+    console.log(`wrote public/fonts/licenses/${SOURCE.licenseFile}`);
     console.log(`source: ${SOURCE.repo}`);
   } finally {
     await rm(work, { recursive: true, force: true });

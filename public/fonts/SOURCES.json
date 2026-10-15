@@ -1,5 +1,5 @@
 {
-  "note": "Upstream URLs for every self-hosted font binary. All families are licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). Fetched via the Google Fonts CSS API, which serves the unmodified upstream binaries.",
+  "note": "Upstream URLs for every self-hosted font binary. All families are licensed under the SIL Open Font License 1.1 (https://openfontlicense.org), and each family's OFL text is stored verbatim under public/fonts/licenses/. Fetched via the Google Fonts CSS API, which serves the unmodified upstream binaries.",
   "generated": "2026-10-15",
   "families": [
     {
@@ -81,6 +81,23 @@
       "weight": "400 600",
       "bytes": 31432,
       "upstream": "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2"
+    }
+  ],
+  "licenses": [
+    {
+      "file": "licenses/archivo-OFL.txt",
+      "family": "Archivo",
+      "source": "https://github.com/google/fonts/tree/main/ofl/archivo"
+    },
+    {
+      "file": "licenses/source-serif-4-OFL.txt",
+      "family": "Source Serif 4",
+      "source": "https://github.com/google/fonts/tree/main/ofl/sourceserif4"
+    },
+    {
+      "file": "licenses/jetbrains-mono-OFL.txt",
+      "family": "JetBrains Mono",
+      "source": "https://github.com/google/fonts/tree/main/ofl/jetbrainsmono"
     }
   ]
 }
