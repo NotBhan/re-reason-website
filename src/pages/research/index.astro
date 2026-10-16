@@ -79,7 +79,7 @@ const total = groups.reduce((sum, group) => sum + group.entries.length, 0);
     groups.map((group) => (
       <section class="mt-24 sm:mt-32">
         <div class="grid gap-x-16 gap-y-6 lg:grid-cols-12">
-          <div class="lg:col-span-5">
+          <div class="intro-rail lg:col-span-5">
             <Eyebrow label={group.meta.plural} />
             <h2 class="mt-6 text-title">{group.meta.plural}</h2>
             <p class="measure mt-5 text-body text-ash">{group.meta.blurb}</p>

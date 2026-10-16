@@ -166,6 +166,11 @@
   /* Vertical rhythm between major sections — generous, for editorial pacing. */
   --section-block: clamp(5rem, 2.5rem + 9vw, 11rem);
 
+  /* Clearance under the sticky header (4rem tall) for anything that pins to
+     the top of the viewport: anchor scroll-margin, and the section intro
+     rail. One number, so an anchor jump and a pinned intro land identically. */
+  --sticky-offset: 5.5rem;
+
   /* Minimum comfortable hit area for interactive elements. */
   --hit-area: 2.75rem;
 
@@ -220,7 +225,7 @@
 
   /* Anchor targets must clear the sticky header when jumped to. */
   :where([id]) {
-    scroll-margin-top: 5.5rem;
+    scroll-margin-top: var(--sticky-offset);
   }
 
   button,
@@ -256,6 +261,39 @@
 
 @utility section-pad {
   padding-block: var(--section-block);
+}
+
+/*
+  Section intro column, from the lg breakpoint up.
+
+  Every desktop section is a 12-column grid whose left column carries a short
+  intro block — eyebrow, heading, a few lines — beside a content column that is
+  usually much taller. Grid items stretch to the row height by default, and the
+  intro block sits at the top of that stretched box, so the rest of the row
+  rendered as vacant left rail: measured at 1440px, it was 166–396px in the
+  homepage sections and about 3,970px beside the findings list.
+
+  The obvious alternative — centring the intro block in the row — was rendered
+  and rejected: it breaks the registration line the page is built on, where the
+  eyebrow and the content column's first element start at the same y
+  ("02 STRUCTURE" against "UPDATE RULE", "03 EVIDENCE" against the metrics
+  panel, "04 ACCESS" against the first destination row), and it only moves the
+  void from below to above.
+
+  Instead the intro column keeps the registration at rest and follows its
+  section while the section scrolls, pinned below the header at the same
+  offset anchor jumps clear. The whitespace stays; what changes is that the
+  left side is no longer vacant across multiple screens.
+
+  `align-self: start` is load-bearing: while the item is stretched, it is as
+  tall as the row and there is nothing to stick within.
+*/
+@utility intro-rail {
+  @media (width >= 64rem) {
+    position: sticky;
+    top: var(--sticky-offset);
+    align-self: start;
+  }
 }
 
 /* Caps line length for readable prose without counting characters by hand. */
