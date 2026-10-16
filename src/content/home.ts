@@ -20,7 +20,7 @@
  * Sources used, all under https://github.com/NotBhan/re-reason:
  *   README.md                          problem statement, boundaries
  *   docs/01_project_overview.md        hypothesis, nomenclature, philosophy
- *   docs/RESEARCH_STATUS.md            current validated state (2026-10-14)
+ *   docs/RESEARCH_STATUS.md            current validated state (2026-10-16)
  *   docs/reports/*.md                  individual measurements, cited per item
  *
  * Epistemic rules this file follows, taken from the repository's own policy:
@@ -324,7 +324,7 @@ export const EVIDENCE: EvidenceContent = {
 
   /** VERIFIED — docs/RESEARCH_STATUS.md §5, "Active / next experiment". */
   statusLine:
-    'No experiment is currently running. Phase 1.6 Stage 2 is complete and EXP-CYCLIC-ADD-01 closed as a rejection; Stage 3 composed sequence training remains unauthorized pending review.',
+    'No experiment is currently running. Phase 1.6 Stage 2 is complete; EXP-CYCLIC-ADD-01 closed as a rejection and the step-wise supervised follow-up closed inconclusive at a macro validation accuracy of 0.6750; Stage 3 composed sequence training remains unauthorized pending review.',
 
   /** VERIFIED — docs/RESEARCH_STATUS.md, "Headline validated metrics". */
   metrics: {
@@ -463,12 +463,13 @@ export const EVIDENCE: EvidenceContent = {
       status: 'current',
       title: 'Phase 1.6 — address binding without arithmetic',
       detail:
-        'The Stage 1 pilot fitted 100% of its 64 training pairs with zero validation accuracy across five seeds and failed its gate, while its deterministic pre-flight passed exactly, 16/16. Stage 2 passed address binding for Slot-MGU at 1.0000 on 5/5 seeds over 1,200 sequences, and failed Cyclic-MGU and the Vanilla GRU control below the rejection boundary. A third pilot, embedding an exact rotation operator in a trainable state, failed rejection at a mean of 0.0625 against chance 0.10.',
+        'The Stage 1 pilot fitted 100% of its 64 training pairs with zero validation accuracy across five seeds and failed its gate, while its deterministic pre-flight passed exactly, 16/16. Stage 2 passed address binding for Slot-MGU at 1.0000 on 5/5 seeds over 1,200 sequences, and failed Cyclic-MGU and the Vanilla GRU control below the rejection boundary. A third pilot, embedding an exact rotation operator in a trainable state, failed rejection at a mean of 0.0625 against chance 0.10. A fourth pilot supervised the intermediate destination registers of the same architecture — one registered change — and lifted the macro to 0.6750 (10.8/16) without reaching the 0.950 gate: the register written immediately before the addition reads at canonical alignment 0.8368, and the register written one transition earlier at 0.2573.',
       establishes:
-        'That discrete slot partitioning supported address binding, and that the deterministic components are exact.',
+        'That discrete slot partitioning supported address binding, that the deterministic components are exact, and that intermediate supervision substantially improves the monolithic architecture without closing the arithmetic bottleneck.',
       doesNotEstablish:
-        'That the arithmetic bottleneck is closed — binding an address is not computing with it, and no stage beyond Stage 2 is authorized.',
+        'That the arithmetic bottleneck is closed — binding an address is not computing with it, the step-wise pilot improved but did not pass its gate, and Stage 3 composed sequence training remains unauthorized.',
       sources: [
+        { label: 'exp_cyclic_stepwise_01_report.md', path: 'docs/reports/exp_cyclic_stepwise_01_report.md' },
         { label: 'RESEARCH_STATUS.md', path: 'docs/RESEARCH_STATUS.md' },
         { label: 'RESEARCH_LOG.md', path: 'docs/RESEARCH_LOG.md' },
       ],
@@ -512,7 +513,7 @@ export const ACCESS: AccessContent = {
       label: 'Research status',
       hrefKey: 'researchStatus',
       description: 'The current validated state, with every claim cited to the report it came from.',
-      meta: 'Updated 2026-10-14',
+      meta: 'Updated 2026-10-16',
     },
     {
       label: 'Experiment reports',

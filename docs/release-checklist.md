@@ -133,7 +133,7 @@ development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
 
 ### Research integrity
 
-Content is synced to the RE:REASON research repository at **`e8aca1e`**, which was
+Content is synced to the RE:REASON research repository at **`0e143c5`**, which was
 clean (no uncommitted changes) when read. Claims rest on committed artifacts at
 that revision, not on a working tree. Re-syncing means re-reading
 `docs/RESEARCH_STATUS.md` and `docs/RESEARCH_LOG.md` in that repository and
@@ -148,9 +148,11 @@ site never reads the research repository at build time.
 - Phase 1.6 states `FAILED its gate` and `accuracy 0.0000 (0/16) across all five
   seeds` for Track 1A, and carries the later committed results — Stage 2 address
   binding `PASSED, 1.0000 on 5/5 seeds` for Slot-MGU and `FAILED` for Cyclic-MGU
-  and the Vanilla GRU control, and EXP-CYCLIC-ADD-01 closed as `FAIL_REJECTION`.
-  `speculative-pipeline` still carries `implementation: not-implemented` and
-  states it was not built and is not currently pursued; `nonlinear-candidate-mgu`
+  and the Vanilla GRU control, EXP-CYCLIC-ADD-01 closed as `FAIL_REJECTION`, and
+  EXP-CYCLIC-STEPWISE-01 closed as `INCONCLUSIVE_INTERMEDIATE` at macro `0.6750`
+  against `0.0625`, with the register read asymmetry (`0.8368` vs `0.2573`) carried
+  unsoftened. `speculative-pipeline` still carries `implementation: not-implemented`
+  and states it was not built and is not currently pursued; `nonlinear-candidate-mgu`
   still carries `implementation: implemented` and states that the project makes
   no novelty claim for it.
 - Experiment entries carry `establishes`, `doesNotEstablish` and limitations;
@@ -239,6 +241,16 @@ site cannot decide which artifact is wrong, and excluding the figures does not
 resolve the discrepancy — it only avoids publishing an unresolved claim. Nothing
 in this release depends on those two figures: the six published ones are
 unaffected.
+
+A third unresolved item is a number, not a figure. The registered report for
+EXP-CYCLIC-STEPWISE-01 lists selected-checkpoint step-1 accuracies of 1.0000,
+1.0000, 1.0000, 0.9375 and 0.9375 — macro 0.9750 — but states a macro of 0.9875,
+which matches the *final* checkpoints instead (four seeds at 1.0000, one at
+0.9375). `docs/RESEARCH_STATUS.md` and the EXP-CYCLIC-PERSIST-01 specification
+carry the 0.9875 form. The site reports the step-wise results without the disputed
+macro. Reconciling the figure is a research-owner decision, and the site's own
+number set does not depend on it (the gating terminal accuracy of 0.6750 is
+consistent across the report and the artifact).
 
 ---
 

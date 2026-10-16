@@ -2,8 +2,8 @@
 title: "Phase 1.6 — architectural reformulation"
 number: "1.6"
 status: in-progress
-date: "2026-10-15"
-summary: "A standalone programme testing whether explicit binding and cyclic arithmetic inductive biases produce compositional modular arithmetic. The Stage 1 trained pilot failed its gate at 0.0000 (0/16); Stage 2 established address binding with discrete slots but not arithmetic; the Cyclic-MGU integration pilot failed its preregistered rejection boundary."
+date: "2026-10-16"
+summary: "A standalone programme testing whether explicit binding and cyclic arithmetic inductive biases produce compositional modular arithmetic. The Stage 1 trained pilot failed its gate at 0.0000 (0/16); Stage 2 established slot address binding but not arithmetic; the Cyclic-MGU pilot failed its rejection boundary, and a step-wise supervised follow-up reached 0.6750 without passing the gate."
 
 objectives:
   - "Test whether architectures carrying an explicit arithmetic or binding inductive bias acquire modular arithmetic compositionally rather than by memorization."
@@ -58,9 +58,21 @@ results:
       continuous 212-dimensional state. Per-seed validation accuracy was 0.0000, 0.0625, 0.1250,
       0.1250 and 0.0000: 0/5 seeds reached 0.950 and 5/5 fell below 0.250, mean 0.0625 against
       chance 0.10. The hypothesis was contradicted under the registered protocol.
+  - label: "EXP-CYCLIC-STEPWISE-01 — step-wise destination supervision"
+    value: INCONCLUSIVE_INTERMEDIATE
+    note: >
+      One isolated intervention on the same monolithic Cyclic-MGU at an unchanged 219,018
+      trainable parameters: auxiliary supervision of the destination register values at steps 0
+      and 1, at coefficient 1.0. Selected-checkpoint validation accuracy per seed was 0.7500,
+      0.8750, 0.4375, 0.6250 and 0.6875 — macro 0.6750 (10.8/16), against 0.0625 for the
+      terminal-only predecessor — but 0/5 seeds reached the 0.950 gate and 0/5 fell below the
+      0.250 rejection boundary. The preregistered matrix returns BEHAVIOR_INTERMEDIATE with
+      REP_PARTIAL: macro read alignment 0.5471, with the register written immediately before the
+      addition aligned (0.8368) and the register written one recurrent transition earlier
+      degraded (0.2573).
   - label: "Held-out test set"
     value: zero queries
-    note: "The held-out split was strictly firewalled at every stage, and pilot-trained parameters were discarded — no persistent checkpoints were created."
+    note: "The held-out split was strictly firewalled at every stage, with zero queries across all runs."
 
 decisions:
   - label: "Candidate 3 (MSM)"
@@ -87,6 +99,14 @@ decisions:
       the registered Stage 1 protocol. Embedding a fixed analytical arithmetic component in a
       continuous recurrent architecture was insufficient for out-of-training-pair generalization
       when the surrounding neural routing networks did not preserve canonical basis coordinates.
+  - label: "EXP-CYCLIC-STEPWISE-01"
+    outcome: >
+      Closed as INCONCLUSIVE_INTERMEDIATE under the preregistered matrix — neither the
+      progression gate nor the rejection boundary was met. The intervention substantially
+      improved generalization over terminal-only supervision (macro 0.6750 against 0.0625),
+      which shows that intermediate supervision aids alignment for a register written immediately
+      before it is read; it did not preserve canonical coordinates for an unaddressed register
+      across a recurrent transition. The protected test split was never queried.
   - label: "Stage 1 investigation"
     outcome: >
       Officially closed. The telemetry defect that hid the training curves was corrected, and
@@ -96,13 +116,15 @@ decisions:
     outcome: >
       Stage 3 composed sequence training and the full campaign remain unauthorized. Advancement
       requires principal-investigator review under the registered contingency ladder, and the
-      recorded next step is PI review of the EXP-CYCLIC-ADD-01 outcome and a determination on
-      research direction.
+      recorded next step is principal-investigator review of the EXP-CYCLIC-STEPWISE-01 report
+      and a decision on the proposed EXP-CYCLIC-PERSIST-01 protocol, whose Stage 1
+      implementation is not authorized.
 
 notPlanned:
   - "Composed sequence training for Candidate 1 (Slot-MGU), halted because its primitive arithmetic was falsified. Its Stage 2 address-binding pass does not reverse that."
   - "Any Stage 3 composed-sequence training without explicit authorization."
   - "Curriculum changes, added candidates, or protocol amendments in response to the pilot outcome."
+  - "Implementation or execution of the proposed EXP-CYCLIC-PERSIST-01 protocol without explicit authorization."
 
 artifacts:
   - path: experiments/phase1_6_stage1_pilot_results.json
@@ -110,10 +132,15 @@ artifacts:
   - path: experiments/exp_cyclic_add_01_results.json
   - path: experiments/run_exp_cyclic_add_01.py
   - path: tests/test_exp_cyclic_add_01.py
+  - path: experiments/exp_cyclic_stepwise_01_results.json
+  - path: experiments/run_exp_cyclic_stepwise_01.py
+  - path: tests/test_exp_cyclic_stepwise_01.py
   - path: src/re_reason/core/register_machine_models.py
 
 sources:
   - path: docs/reports/phase_1_6_architectural_reformulation_proposal.md
+  - path: docs/reports/exp_cyclic_stepwise_01_report.md
+  - path: docs/research/exp_cyclic_stepwise_01_specification.md
   - path: docs/RESEARCH_STATUS.md
   - path: docs/RESEARCH_LOG.md
   - path: docs/reports/phase_1_evidence_synthesis.md
@@ -147,6 +174,19 @@ learned routing did not preserve the coordinates it depends on. Mean validation 
 0.0625 against a chance rate of 0.10. The deterministic arithmetic is implementable; neither
 learning it, nor routing through it, follows from having it.
 
+A fourth executed pilot asked whether the remaining failure was supervision rather than
+architecture. EXP-CYCLIC-STEPWISE-01 kept the model fixed — the same monolithic Cyclic-MGU,
+the same 219,018 trainable parameters, the same parameter-free rotation ALU — and registered a
+single change: auxiliary supervision of the destination register values at steps 0 and 1, at
+coefficient 1.0. Macro validation accuracy rose from 0.0625 to 0.6750 (10.8/16), with every
+seed training to 100% and landing between 0.4375 and 0.8750 — above the rejection boundary,
+below the gate — and the preregistered matrix returns INCONCLUSIVE_INTERMEDIATE: intermediate
+behaviour with partial representation alignment. The representation diagnostics locate what
+remains: the register written immediately before the addition reads at canonical alignment
+0.8368, while the register written one recurrent transition earlier reads at 0.2573.
+Supervision made the routing learnable; it did not make an unaddressed operand survive a state
+update.
+
 It is also worth being precise about what each pass does not show. A parameter-free rotation
 operator applied to an exact cyclic encoding is correct by construction: passing that check
 verifies the numerical implementation of the component and says nothing about whether a
@@ -157,8 +197,10 @@ at zero parameters, which establishes the reference and not any learned capabili
 2's address-binding pass is not a reversal of Stage 1: Slot-MGU binds addresses, and it still
 does not compute modular arithmetic.
 
-The open question recorded at closure is whether modular arithmetic generalization strictly
-requires discrete slot partitioning combined with canonical coordinate enforcement, or whether
-some other coordinate regularization could let a monolithic or continuous architecture
-preserve harmonic coordinates. Nothing beyond Stage 2 is authorized. The next step is review,
-not further training.
+The open question has narrowed accordingly: can persistence supervision during the intermediate
+step prevent the recurrent state from degrading an unaddressed register inside the monolithic
+architecture, or does coordinate preservation across recurrent transitions fundamentally
+require discrete slot isolation? A protocol that would test the first branch —
+EXP-CYCLIC-PERSIST-01 — is preregistered, but its implementation is not authorized. Stage 3
+composed sequence training remains closed, and the recorded next step is principal-investigator
+review of the step-wise report and a decision on that protocol. Review, not further training.
