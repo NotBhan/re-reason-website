@@ -52,7 +52,7 @@ decisions:
 
 notPlanned:
   - "Ad-hoc patching of the frozen core, ruled out by Experiments J, K and O — each degraded sequence exact match."
-  - "A transition to Phase 2 speculative machinery, ruled out because verification showed no decision-relevant signal and the branching oracle proved unachievable."
+  - "An immediate transition to Phase 2 speculative machinery, ruled out at this phase's close because verification showed no decision-relevant signal and the branching oracle proved unachievable. The machinery was later implemented under a separate milestone programme, using action-conditioned proposals and a deterministic rule verifier rather than the formulations tested here."
   - "Any claim of general reasoning capability from Phase-1 results."
 
 artifacts:
@@ -65,7 +65,7 @@ sources:
   - path: docs/RESEARCH_STATUS.md
   - path: docs/reports/experiment_p_sequence_error_budget.md
   - path: docs/reports/experiment_u_task_interface.md
-  - path: docs/reports/experiment_ah_training_pool_stress.md
+  - path: docs/reports/experiment_ah_capacity_ladder.md
 
 related:
   - nonlinear-candidate-mgu

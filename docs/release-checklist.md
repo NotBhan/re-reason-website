@@ -8,6 +8,14 @@ Last reviewed: 2026-10-15 (Stage 8). Commands are given so each claim can be
 re-checked rather than taken on trust. Operational detail lives in
 [deployment.md](./deployment.md).
 
+**Content re-synced 2026-10-17** against the research repository at `3110a03`,
+which added one research entry and therefore one route. `npm run check`, both
+build modes, `npm run verify:release` and the two-build determinism diff were
+re-run and re-passed; the route, link, metadata and sitemap counts below are from
+that run. **Browser verification was not re-run**, so the WebKit, Chromium and
+Firefox rows still describe the 2026-10-15 revision and the added route is
+unverified in a browser.
+
 ---
 
 ## Verified
@@ -17,8 +25,8 @@ re-checked rather than taken on trust. Operational detail lives in
 | Check | Command | Result |
 | --- | --- | --- |
 | Type + template diagnostics | `npm run check` | 0 errors, 0 warnings, 0 hints |
-| Domain-agnostic build | `npm run build` (no `SITE_URL`) | 12 routes, succeeds, warns that it is incomplete |
-| Configured build | `SITE_URL=https://<test> npm run build` | 12 routes, canonical, Open Graph and sitemap emitted |
+| Domain-agnostic build | `npm run build` (no `SITE_URL`) | 13 routes, succeeds, warns that it is incomplete |
+| Configured build | `SITE_URL=https://<test> npm run build` | 13 routes, canonical, Open Graph and sitemap emitted |
 | Release validation, both modes | `npm run verify:release` | Passes in domain-agnostic and configured modes. A build made with a *synthetic* origin must also pass `--origin=<that origin>`; see "Release validator" below |
 | Determinism | two builds, `diff -rq` | Byte-identical |
 
@@ -42,12 +50,12 @@ Verified in both modes by `scripts/verify-release.mjs` and by inspection:
 - **Domain-agnostic:** no canonical, no `og:url`, no `og:image`, no sitemap;
   `robots.txt` emits `Disallow: /`; no placeholder, filesystem or development URL
   anywhere in the output.
-- **Configured:** canonical on all 12 pages, each on the configured origin, each
+- **Configured:** canonical on all 13 pages, each on the configured origin, each
   resolving to a real page, none carrying a query or fragment; `og:url` equal to
-  the canonical; `og:image` absolute; sitemap contains exactly the 12 built routes
+  the canonical; `og:image` absolute; sitemap contains exactly the 13 built routes
   with no duplicates and consistent trailing slashes; `robots.txt` allows crawling
   and advertises the sitemap.
-- 12 distinct titles and 12 distinct descriptions, authored per route rather than
+- 13 distinct titles and 13 distinct descriptions, authored per route rather than
   derived from headings.
 - All metadata is present in the static HTML; none of it depends on JavaScript.
 
@@ -98,7 +106,7 @@ preview, which already knows the intended routing.
 
 | Behaviour | Result |
 | --- | --- |
-| All 12 routes, both modes | 200 |
+| All 13 routes, both modes | 200 |
 | Bare path without a slash | **301 → the slash form** |
 | Fonts, licences, figures, `og.png`, `favicon.svg` | 200 |
 | Unknown paths | genuine **404** in both modes |
@@ -113,7 +121,7 @@ clean — every route, every asset class, the withheld figures (404), the sitema
 both modes, three unknown-path shapes, and the content types of `og.png` and the
 symbol subset.
 
-Also verified: 0 unresolved internal links across 181 on 12 pages; no
+Also verified: 0 unresolved internal links across 200 on 13 pages; no
 `file://` paths, filesystem paths or development URLs in the output; no
 development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
 
@@ -133,7 +141,7 @@ development files (`.map`, `.ts`, `.md`, `.astro`) in the output.
 
 ### Research integrity
 
-Content is synced to the RE:REASON research repository at **`0e143c5`**, which was
+Content is synced to the RE:REASON research repository at **`3110a03`**, which was
 clean (no uncommitted changes) when read. Claims rest on committed artifacts at
 that revision, not on a working tree. Re-syncing means re-reading
 `docs/RESEARCH_STATUS.md` and `docs/RESEARCH_LOG.md` in that repository and
@@ -146,15 +154,38 @@ site never reads the research repository at build time.
   [figures.md](./figures.md), quoted as the subject of the dispute. It is not
   presented as a finding anywhere.
 - Phase 1.6 states `FAILED its gate` and `accuracy 0.0000 (0/16) across all five
-  seeds` for Track 1A, and carries the later committed results — Stage 2 address
-  binding `PASSED, 1.0000 on 5/5 seeds` for Slot-MGU and `FAILED` for Cyclic-MGU
-  and the Vanilla GRU control, EXP-CYCLIC-ADD-01 closed as `FAIL_REJECTION`, and
-  EXP-CYCLIC-STEPWISE-01 closed as `INCONCLUSIVE_INTERMEDIATE` at macro `0.6750`
-  against `0.0625`, with the register read asymmetry (`0.8368` vs `0.2573`) carried
-  unsoftened. `speculative-pipeline` still carries `implementation: not-implemented`
-  and states it was not built and is not currently pursued; `nonlinear-candidate-mgu`
-  still carries `implementation: implemented` and states that the project makes
-  no novelty claim for it.
+  seeds` for Track 1A, and carries every later committed result unsoftened: Stage 2
+  address binding `PASSED, 1.0000 on 5/5 seeds` for Slot-MGU and `FAILED` for
+  Cyclic-MGU and the Vanilla GRU control; `EXP-CYCLIC-ADD-01` closed as
+  `FAIL_REJECTION`; `EXP-CYCLIC-STEPWISE-01` closed as `INCONCLUSIVE_INTERMEDIATE`
+  at macro `0.6750` against `0.0625`, with the register read asymmetry (`0.8368`
+  vs `0.2573`) carried; `EXP-CYCLIC-PERSIST-01` closed as
+  `BEHAVIORAL_PASS_CANONICAL_FULL` at macro `0.9875` with the asymmetry resolved;
+  and `EXP-CYCLIC-PERSIST-ABL-01` closed as `INCONCLUSIVE_INTERMEDIATE` at macro
+  `0.5375` with the asymmetry inverted rather than removed. The two passing and
+  failing cells of the 2x2 grid are stated together, and the result is never
+  described as learned arithmetic — the rotation ALU is parameter-free and exact.
+- The Phase 1.6 entry states that Stage 3 composed sequence training is *not
+  authorized* and that an audit *recommends de-prioritizing it*. It does not say
+  Stage 3 was run, and it does not say the audit's recommendation has been ratified.
+- `experiment-3b-pathfinding-evaluation` carries the Milestone 3B outcome with its
+  margin stated beside its interval: `+0.060` against `+0.10` on validation and
+  `+0.056` against `+0.10` on the single held-out pass, the exact `0.0000`
+  difference against the action-masking comparator, and the negative difference
+  against the compute-matched two-rollout comparator. It states that the verifier
+  rejected zero candidates, so error containment was never exercised, and that the
+  outcome's registration and disposition are pending. It does not present the
+  below-margin result as a success.
+- `speculative-pipeline` carries `implementation: implemented` — isolation,
+  deterministic verification and the transaction gate now exist in code and were
+  used by the Milestone 3B runs — while its constraints state that recursion at
+  R > 1, adaptive halting and the learned verifier half are *not* implemented.
+  `nonlinear-candidate-mgu` still carries `implementation: implemented` and states
+  that the project makes no novelty claim for it.
+- The branching and learned-verifier findings remain labelled `Not adopted`, with
+  the text stating that the *tested formulations* were rejected and that
+  action-conditioned branching and a deterministic verifier were implemented
+  afterwards. Neither is presented as later vindicating the rejected variant.
 - Experiment entries carry `establishes`, `doesNotEstablish` and limitations;
   architecture entries carry implementation status, constraints and open
   questions; phase entries carry status, gate outcome and artifacts.
@@ -222,10 +253,10 @@ as private merely because it is disallowed.
 
 ### 5. Push
 
-`main` is **one commit ahead of `origin/main`**. The Stage 7 release work is
-committed locally as `773cbb0` and has not been pushed. Pushing is a decision for
-the repository owner; nothing in the release path requires it, and a host builds
-from whatever commit it is given.
+Resolved — `main` and `origin/main` are level at `b1e3cfc` as of the 2026-10-17
+content re-sync. An earlier revision of this checklist recorded the Stage 7 release
+work as one commit ahead and unpushed; that no longer holds. The re-sync itself is
+uncommitted at the time of writing.
 
 ---
 
@@ -243,14 +274,21 @@ in this release depends on those two figures: the six published ones are
 unaffected.
 
 A third unresolved item is a number, not a figure. The registered report for
-EXP-CYCLIC-STEPWISE-01 lists selected-checkpoint step-1 accuracies of 1.0000,
-1.0000, 1.0000, 0.9375 and 0.9375 — macro 0.9750 — but states a macro of 0.9875,
-which matches the *final* checkpoints instead (four seeds at 1.0000, one at
-0.9375). `docs/RESEARCH_STATUS.md` and the EXP-CYCLIC-PERSIST-01 specification
-carry the 0.9875 form. The site reports the step-wise results without the disputed
-macro. Reconciling the figure is a research-owner decision, and the site's own
-number set does not depend on it (the gating terminal accuracy of 0.6750 is
-consistent across the report and the artifact).
+EXP-CYCLIC-STEPWISE-01 lists per-seed step-1 accuracies of 1.0000, 1.0000, 1.0000,
+0.9375 and 0.9375 — a mean of 0.9750 — but states a macro of 0.9875, and repeats
+that figure in its interpretation. The artifact shows where 0.9875 comes from: at
+the *final* checkpoints the same five per-seed values are 0.9375, 1.0000, 1.0000,
+1.0000 and 1.0000, which is 0.9875. The site reports the step-wise results without
+the disputed macro.
+
+That now collides with a legitimate value from a different experiment.
+EXP-CYCLIC-PERSIST-01's own macro validation accuracy is also 0.9875 — computed
+from per-seed terminal accuracies of 1.0000, 1.0000, 1.0000, 0.9375 and 1.0000,
+which does average to 0.9875, checked against its artifact. The coincidence is
+exact and the two numbers mean different things. The site states 0.9875 only for
+EXP-CYCLIC-PERSIST-01, and always beside the per-seed values that produce it.
+Reconciling the step-wise figure remains a research-owner decision, and nothing
+else on the site depends on it.
 
 ---
 

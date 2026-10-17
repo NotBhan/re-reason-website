@@ -117,9 +117,12 @@ export const HERO: HeroContent = {
     ],
   },
 
-  /** VERIFIED — docs/RESEARCH_STATUS.md. */
+  /**
+   * VERIFIED — docs/reports/architecture_gap_audit_and_milestone_proposal.md,
+   * docs/research/pre_3b_experimental_protocol.md.
+   */
   phaseNotice:
-    'Phase-2 machinery — branching, learned verification, transactional commit, recursion and adaptive halting — is not implemented and is not currently pursued.',
+    'The state-machine machinery — isolated branches, a deterministic verifier and transactional commits — is implemented and has been evaluated end to end. Recursion and adaptive halting are not implemented.',
 };
 
 /* --------------------------------------------------------------------------
@@ -322,9 +325,12 @@ export const EVIDENCE: EvidenceContent = {
   eyebrow: 'Evidence',
   heading: 'What has been measured, and what has not.',
 
-  /** VERIFIED — docs/RESEARCH_STATUS.md §5, "Active / next experiment". */
+  /**
+   * VERIFIED — docs/RESEARCH_STATUS.md §5 and the run artifacts; the milestone
+   * outcome's registration and disposition are pending, per PLAN.md.
+   */
   statusLine:
-    'No experiment is currently running. Phase 1.6 Stage 2 is complete; EXP-CYCLIC-ADD-01 closed as a rejection and the step-wise supervised follow-up closed inconclusive at a macro validation accuracy of 0.6750; Stage 3 composed sequence training remains unauthorized pending review.',
+    'No experiment is currently running. The 2x2 supervision grid for modular addition is complete: joint destination and persistence supervision passed the Phase 1.6 gate at a macro validation accuracy of 0.9875, and the persistence-only ablation closed inconclusive at 0.5375. The first end-to-end pathfinding evaluation put the gated pipeline level with a shallow action-masking comparator, and its outcome awaits principal-investigator disposition.',
 
   /** VERIFIED — docs/RESEARCH_STATUS.md, "Headline validated metrics". */
   metrics: {
@@ -412,14 +418,18 @@ export const EVIDENCE: EvidenceContent = {
     {
       id: 'branching',
       status: 'not-adopted',
-      title: 'Speculative branching',
+      title: 'Speculative branching, as first formulated',
       detail:
-        'A branching oracle with 8 branches reached 0.6913 exact-match, but per-draw information was at chance and matched noise recovered roughly 46% of the gain.',
+        'A branching oracle with 8 branches reached 0.6913 exact-match, but per-draw information was at chance and matched noise recovered roughly 46% of the gain. The formulation — Gaussian noise perturbation of a frozen state — was not adopted. Candidate branching has since been implemented in a different form, with proposals conditioned on discrete actions rather than noise, and evaluated end to end.',
       establishes: 'That the tested branching setup was not validated under compute-matched conditions.',
       doesNotEstablish:
-        'That latent search is impossible in general — the tested selection signal carried no usable information.',
+        'That latent search is impossible in general — the tested selection signal carried no usable information, and the negative result is specific to that formulation.',
       sources: [
         { label: 'branching_feasibility_oracle.md', path: 'docs/reports/branching_feasibility_oracle.md' },
+        {
+          label: 'architecture_gap_audit_and_milestone_proposal.md',
+          path: 'docs/reports/architecture_gap_audit_and_milestone_proposal.md',
+        },
       ],
     },
     {
@@ -427,11 +437,17 @@ export const EVIDENCE: EvidenceContent = {
       status: 'not-adopted',
       title: 'A learned verifier',
       detail:
-        'The headline AUROC was an artefact of an always-deterministic top-1 selector, and no decision-relevant signal was found.',
+        'The headline AUROC was an artefact of an always-deterministic top-1 selector, and no decision-relevant signal was found. The learned scorer was not adopted. A deterministic rule checker — edge connectivity and blockade status against the ground-truth map — has since been implemented and is what the evaluated pipeline consults.',
       establishes: 'That the tested verifier signal was not usable for selection.',
       doesNotEstablish:
-        'That verification is impossible in general — the negative result is specific to this setup.',
-      sources: [{ label: 'verifier_feasibility.md', path: 'docs/reports/verifier_feasibility.md' }],
+        'That verification is impossible in general — the negative result is specific to a learned scorer, not to rule checking against known constraints.',
+      sources: [
+        { label: 'verifier_feasibility.md', path: 'docs/reports/verifier_feasibility.md' },
+        {
+          label: 'architecture_gap_audit_and_milestone_proposal.md',
+          path: 'docs/reports/architecture_gap_audit_and_milestone_proposal.md',
+        },
+      ],
     },
     {
       id: 'wrap',
@@ -460,18 +476,39 @@ export const EVIDENCE: EvidenceContent = {
     },
     {
       id: 'pilot',
-      status: 'current',
-      title: 'Phase 1.6 — address binding without arithmetic',
+      status: 'established',
+      title: 'Phase 1.6 — joint supervision closes the gate',
       detail:
-        'The Stage 1 pilot fitted 100% of its 64 training pairs with zero validation accuracy across five seeds and failed its gate, while its deterministic pre-flight passed exactly, 16/16. Stage 2 passed address binding for Slot-MGU at 1.0000 on 5/5 seeds over 1,200 sequences, and failed Cyclic-MGU and the Vanilla GRU control below the rejection boundary. A third pilot, embedding an exact rotation operator in a trainable state, failed rejection at a mean of 0.0625 against chance 0.10. A fourth pilot supervised the intermediate destination registers of the same architecture — one registered change — and lifted the macro to 0.6750 (10.8/16) without reaching the 0.950 gate: the register written immediately before the addition reads at canonical alignment 0.8368, and the register written one transition earlier at 0.2573.',
+        'The Stage 1 pilot fitted 100% of its 64 training pairs with zero validation accuracy across five seeds and failed its gate, while its deterministic pre-flight passed exactly, 16/16. Stage 2 passed address binding for Slot-MGU at 1.0000 on 5/5 seeds over 1,200 sequences, and failed Cyclic-MGU and the Vanilla GRU control below the rejection boundary. A third pilot, embedding an exact rotation operator in a trainable state, failed rejection at a mean of 0.0625 against chance 0.10. A fourth supervised the intermediate destination registers — one registered change — reaching 0.6750 with the register written one transition earlier collapsing to 0.2573. A fifth supervised the unaddressed register as well and passed: macro 0.9875, 4/5 seeds at the 0.950 gate, both operands reading at 0.8879 and 0.9303. A sixth removed the destination terms and fell back to 0.5375 with the asymmetry inverted, completing the 2x2 grid — 0.0625, 0.6750, 0.5375, 0.9875 — on one architecture at an invariant 219,018 parameters.',
       establishes:
-        'That discrete slot partitioning supported address binding, that the deterministic components are exact, and that intermediate supervision substantially improves the monolithic architecture without closing the arithmetic bottleneck.',
+        'That a continuous monolithic state does not require discrete slot isolation to hold two registers independently, and that joint destination and persistence supervision — not destination or persistence alone — is what carries this architecture to near-perfect validation accuracy on a three-step trace.',
       doesNotEstablish:
-        'That the arithmetic bottleneck is closed — binding an address is not computing with it, the step-wise pilot improved but did not pass its gate, and Stage 3 composed sequence training remains unauthorized.',
+        'That arithmetic was learned — the rotation ALU is parameter-free and exact, so the result is about routing into it. It also covers seen validation pairs only: the protected split was never queried, and Stage 3 composed sequences remain unauthorized.',
       sources: [
-        { label: 'exp_cyclic_stepwise_01_report.md', path: 'docs/reports/exp_cyclic_stepwise_01_report.md' },
+        { label: 'exp_cyclic_persist_01_report.md', path: 'docs/reports/exp_cyclic_persist_01_report.md' },
+        {
+          label: 'exp_cyclic_persist_abl_01_report.md',
+          path: 'docs/reports/exp_cyclic_persist_abl_01_report.md',
+        },
         { label: 'RESEARCH_STATUS.md', path: 'docs/RESEARCH_STATUS.md' },
-        { label: 'RESEARCH_LOG.md', path: 'docs/RESEARCH_LOG.md' },
+      ],
+    },
+    {
+      id: 'milestones',
+      status: 'current',
+      title: 'The state machine, evaluated end to end',
+      detail:
+        'With the isolation container, transaction gate, deterministic verifier, action-conditioned brancher and two-phase orchestrator implemented, five paired seeds were trained on procedurally generated pathfinding and evaluated against three parameter-matched comparators. Against the un-gated comparator the paired difference was +0.060 on validation, 95% CI [0.0424, 0.0776], and +0.056 on the single held-out pass, 95% CI [0.0192, 0.0928] — positive on both, below the preregistered +0.10 margin on both. Against the action-masking comparator the difference was exactly 0.0000, per seed as well as in aggregate. A compute-matched two-rollout comparator scored higher on both partitions (−0.1400 and −0.1040).',
+      establishes:
+        'A measured advantage over the parameter-matched un-gated comparator whose interval excludes zero on both partitions — and the cost of it: the same goal nodes as the shallow action-masking comparator at about 2.4x the executed FLOPs.',
+      doesNotEstablish:
+        'That verified speculative commit contributes anything here. The verifier rejected zero candidates and the gate rolled back zero times across every seed and both partitions, so error containment and dead-end recovery were never exercised. That leaves the mechanism untested rather than refuted — the two are not distinguishable from these runs.',
+      sources: [
+        {
+          label: 'pre_3b_experimental_protocol.md',
+          path: 'docs/research/pre_3b_experimental_protocol.md',
+        },
+        { label: 'PLAN.md', path: 'PLAN.md' },
       ],
     },
   ],
@@ -513,7 +550,7 @@ export const ACCESS: AccessContent = {
       label: 'Research status',
       hrefKey: 'researchStatus',
       description: 'The current validated state, with every claim cited to the report it came from.',
-      meta: 'Updated 2026-10-16',
+      meta: 'Updated 2026-10-17',
     },
     {
       label: 'Experiment reports',

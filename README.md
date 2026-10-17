@@ -41,7 +41,7 @@ React 19 (one island) · Motion for React (`motion/react`) · Anime.js 4 · CSS.
 | D | Evidence | Measured results and open questions | Motion for React island |
 | E | Access | The public record | CSS hover and focus |
 
-**Research pages** (`/research/`) — eleven routes, seven of them detail pages:
+**Research pages** (`/research/`) — twelve routes, eight of them detail pages:
 
 ```
 /research/                                 the editorial index

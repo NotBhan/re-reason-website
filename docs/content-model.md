@@ -11,8 +11,8 @@ How research material is represented, validated and published.
 /research/phases/                          list            → /research/phases/<id>
 ```
 
-Twelve routes are generated in total: the homepage, the research index, three
-category indexes, and seven detail pages. The three category indexes come from
+Thirteen routes are generated in total: the homepage, the research index, three
+category indexes, and eight detail pages. The three category indexes come from
 one template (`src/pages/research/[category]/index.astro`) rather than three
 near-identical files.
 
@@ -119,8 +119,10 @@ the site follows them:
   known recurrence. Nothing on this site may imply otherwise.
 - **An observation is not a cause.** Findings and results are labelled with what
   they establish *and* what they explicitly do not.
-- **Negative results are published.** Two of the seven entries record approaches
-  that were tried and not adopted, and one records a failed gate.
+- **Negative results are published.** Entries record approaches that were tried
+  and not adopted, a candidate that failed its gate, and a later candidate that
+  passed it. One experiment is carried with the margin it missed stated in the
+  same breath as the interval that excluded zero.
 - **Nothing is published that is not in the repository.** Where a measurement is
   quoted, it is quoted with the document it came from.
 - **A phase or experiment is not a success merely because documentation exists

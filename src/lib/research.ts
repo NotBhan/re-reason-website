@@ -29,7 +29,7 @@ export const COLLECTION_META: Record<
     plural: 'Architectures',
     href: '/research/architectures',
     blurb:
-      'Systems and documented designs — including one that was deliberately not built, because the reasons it was abandoned are themselves a result.',
+      'Systems and documented designs — including one that was closed as a design and later built, because both states are part of its record.',
   },
   phases: {
     singular: 'Phase',

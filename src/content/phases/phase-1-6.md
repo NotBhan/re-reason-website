@@ -2,8 +2,8 @@
 title: "Phase 1.6 — architectural reformulation"
 number: "1.6"
 status: in-progress
-date: "2026-10-16"
-summary: "A standalone programme testing whether explicit binding and cyclic arithmetic inductive biases produce compositional modular arithmetic. The Stage 1 trained pilot failed its gate at 0.0000 (0/16); Stage 2 established slot address binding but not arithmetic; the Cyclic-MGU pilot failed its rejection boundary, and a step-wise supervised follow-up reached 0.6750 without passing the gate."
+date: "2026-10-17"
+summary: "A standalone programme testing whether explicit binding and cyclic arithmetic inductive biases produce compositional modular arithmetic. Stage 1 failed at 0.0000; Stage 2 bound slot addresses but not arithmetic; the Cyclic-MGU pilot failed rejection; destination supervision reached 0.6750, joint destination-plus-persistence supervision passed at 0.9875, persistence alone reached 0.5375."
 
 objectives:
   - "Test whether architectures carrying an explicit arithmetic or binding inductive bias acquire modular arithmetic compositionally rather than by memorization."
@@ -21,7 +21,10 @@ scope: >
   architectures with learned ALUs, and deterministic component pre-flight checks for the
   architectures with hardwired cyclic priors. Stage 1 and Stage 2 have both been executed and
   closed, and a deterministic execution kernel (Candidate 1H) was added afterwards as an
-  analytical reference. Stage 3 composed sequence training has not been authorized.
+  analytical reference. Four cyclic-MGU experiments have since run to completion against one
+  architecture at an invariant 219,018 trainable parameters, completing the 2x2 auxiliary
+  supervision grid. Stage 3 composed sequence training has not been authorized, and an
+  architecture audit recommends de-prioritizing it.
 
 results:
   - label: "Track 1A — trained end-to-end pilot"
@@ -73,6 +76,27 @@ results:
   - label: "Held-out test set"
     value: zero queries
     note: "The held-out split was strictly firewalled at every stage, with zero queries across all runs."
+  - label: "EXP-CYCLIC-PERSIST-01 — multi-register persistence supervision"
+    value: PASSED, 0.9875
+    note: >
+      One registered change to the same monolithic Cyclic-MGU at an unchanged 219,018 trainable
+      parameters: auxiliary supervision of the unaddressed register r0 across the S1 to S2
+      transition, at coefficient 0.5 alongside the existing destination terms. Selected-checkpoint
+      validation accuracy per seed was 1.0000, 1.0000, 1.0000, 0.9375 and 1.0000 — macro 0.9875
+      (15.8/16) — so 4/5 seeds reached the 0.950 gate and 0/5 fell below the 0.250 boundary. The
+      preregistered matrix returns BEHAVIORAL_PASS_CANONICAL_FULL with REP_CANONICAL_FULL, and the
+      register read asymmetry is resolved: C_read(r0) 0.8879 and C_read(r1) 0.9303, both at or
+      above 0.80, with macro C_read 0.9091, S_context 0.8584 and C_ALU 0.8496.
+  - label: "EXP-CYCLIC-PERSIST-ABL-01 — persistence-only ablation"
+    value: INCONCLUSIVE_INTERMEDIATE
+    note: >
+      The same architecture under the same protocol with the destination terms removed
+      (coefficient 0.0), completing the 2x2 supervision grid. Per-seed selected-checkpoint
+      accuracy was 0.3750, 0.5000, 0.6250, 0.4375 and 0.7500 — macro 0.5375 (43/80) — so 0/5 seeds
+      reached the gate and 0/5 fell below the rejection boundary. Macro S_context 0.3360 and
+      C_ALU 0.4384. The read asymmetry inverts rather than disappearing: r0 survives at 0.7710
+      while the never-supervised write register r1 collapses to 0.2597, with step-1 destination
+      readout at 0.1250 against a 0.10 chance rate.
 
 decisions:
   - label: "Candidate 3 (MSM)"
@@ -107,6 +131,24 @@ decisions:
       which shows that intermediate supervision aids alignment for a register written immediately
       before it is read; it did not preserve canonical coordinates for an unaddressed register
       across a recurrent transition. The protected test split was never queried.
+  - label: "EXP-CYCLIC-PERSIST-01"
+    outcome: >
+      Closed as BEHAVIORAL_PASS_CANONICAL_FULL — the first Phase 1.6 candidate to pass the
+      progression gate. This establishes that the continued failure of the identical monolithic
+      architecture under terminal-only and destination-only supervision was an objective and
+      supervision-horizon limitation rather than an intrinsic routing failure, with the parameter
+      count invariant at 219,018 throughout. It does not establish learned arithmetic: the cyclic
+      ALU is fixed and analytical, so the result validates neural routing and coordinate
+      preservation into that component, not the emergence of arithmetic from data. The protected
+      split was not queried.
+  - label: "EXP-CYCLIC-PERSIST-ABL-01"
+    outcome: >
+      Closed as INCONCLUSIVE_INTERMEDIATE. Persistence supervision alone is not sufficient: it
+      preserves the unaddressed register but leaves the write register ungrounded, and the inverted
+      asymmetry it produces is near-symmetric in magnitude with the destination-only case. Joint
+      destination and persistence supervision remains the only validated objective for this
+      architecture on this task, and the 2x2 supervision grid is empirically complete across seeds
+      42–46.
   - label: "Stage 1 investigation"
     outcome: >
       Officially closed. The telemetry defect that hid the training curves was corrected, and
@@ -114,17 +156,23 @@ decisions:
       validation pairs rather than a logging artifact. Broader Phase 1.6 questions remain open.
   - label: "Advancement"
     outcome: >
-      Stage 3 composed sequence training and the full campaign remain unauthorized. Advancement
-      requires principal-investigator review under the registered contingency ladder, and the
-      recorded next step is principal-investigator review of the EXP-CYCLIC-STEPWISE-01 report
-      and a decision on the proposed EXP-CYCLIC-PERSIST-01 protocol, whose Stage 1
-      implementation is not authorized.
+      The persistence protocol was authorized and executed, and its ablation closed the grid. An
+      architecture-to-implementation audit then found five of the seven target state-machine
+      mechanisms absent from active model code and recommended de-prioritizing Stage 3 composed
+      sequence training: it contains no candidate branching, no transition verifier, no
+      transaction gate and no rollback, so extending the recurrence horizon would refine a
+      conventional recurrent cell without advancing the architecture the project exists to test.
+      The audit recommended constrained graph pathfinding as the end-to-end vehicle instead,
+      together with preserving the protected test firewall, hardening the official runners against
+      artifact overwrite, and implementing the state-isolation and transaction-gate machinery.
+      Stage 3 has not been authorized.
 
 notPlanned:
   - "Composed sequence training for Candidate 1 (Slot-MGU), halted because its primitive arithmetic was falsified. Its Stage 2 address-binding pass does not reverse that."
-  - "Any Stage 3 composed-sequence training without explicit authorization."
+  - "Any Stage 3 composed-sequence training without explicit authorization; the audit recommends de-prioritizing it rather than authorizing it."
   - "Curriculum changes, added candidates, or protocol amendments in response to the pilot outcome."
-  - "Implementation or execution of the proposed EXP-CYCLIC-PERSIST-01 protocol without explicit authorization."
+  - "Coefficient tuning or further sweeps on 3-step modular addition, which the completed 2x2 grid would not inform."
+  - "Evaluation of the protected test split (b ∈ {0, 5}) at this stage. The audit recommends preserving the firewall for an integrated candidate rather than spending it on a 3-step arithmetic model with a fixed analytical ALU."
 
 artifacts:
   - path: experiments/phase1_6_stage1_pilot_results.json
@@ -135,12 +183,23 @@ artifacts:
   - path: experiments/exp_cyclic_stepwise_01_results.json
   - path: experiments/run_exp_cyclic_stepwise_01.py
   - path: tests/test_exp_cyclic_stepwise_01.py
+  - path: experiments/exp_cyclic_persist_01_results.json
+  - path: experiments/run_exp_cyclic_persist_01.py
+  - path: tests/test_exp_cyclic_persist_01.py
+  - path: experiments/exp_cyclic_persist_abl_01_results.json
+  - path: experiments/run_exp_cyclic_persist_abl_01.py
+  - path: tests/test_exp_cyclic_persist_abl_01.py
   - path: src/re_reason/core/register_machine_models.py
 
 sources:
   - path: docs/reports/phase_1_6_architectural_reformulation_proposal.md
   - path: docs/reports/exp_cyclic_stepwise_01_report.md
+  - path: docs/reports/exp_cyclic_persist_01_report.md
+  - path: docs/reports/exp_cyclic_persist_abl_01_report.md
+  - path: docs/reports/architecture_gap_audit_and_milestone_proposal.md
   - path: docs/research/exp_cyclic_stepwise_01_specification.md
+  - path: docs/research/exp_cyclic_persist_01_specification.md
+  - path: docs/research/exp_cyclic_persist_abl_01_specification.md
   - path: docs/RESEARCH_STATUS.md
   - path: docs/RESEARCH_LOG.md
   - path: docs/reports/phase_1_evidence_synthesis.md
@@ -148,6 +207,7 @@ sources:
 related:
   - phase-1
   - nonlinear-candidate-mgu
+  - experiment-3b-pathfinding-evaluation
 ---
 
 Phase 1.6 exists because Phase 1 concluded that the open question had changed. The
@@ -197,10 +257,43 @@ at zero parameters, which establishes the reference and not any learned capabili
 2's address-binding pass is not a reversal of Stage 1: Slot-MGU binds addresses, and it still
 does not compute modular arithmetic.
 
-The open question has narrowed accordingly: can persistence supervision during the intermediate
-step prevent the recurrent state from degrading an unaddressed register inside the monolithic
-architecture, or does coordinate preservation across recurrent transitions fundamentally
-require discrete slot isolation? A protocol that would test the first branch —
-EXP-CYCLIC-PERSIST-01 — is preregistered, but its implementation is not authorized. Stage 3
-composed sequence training remains closed, and the recorded next step is principal-investigator
-review of the step-wise report and a decision on that protocol. Review, not further training.
+A fifth executed pilot answered the question the step-wise result left open, and it passed.
+EXP-CYCLIC-PERSIST-01 changed one thing again — the same architecture, the same 219,018
+parameters, the same fixed ALU — by supervising the *unaddressed* register across the state
+update rather than only the register being written. Macro validation accuracy went from 0.6750
+to 0.9875, four of five seeds reached the 0.950 gate, and the read asymmetry that had blocked
+the previous attempt resolved rather than shifted: the two operands read at 0.8879 and 0.9303,
+both above the canonical threshold, with context consistency at 0.8584 and ALU alignment at
+0.8496. It is the first Phase 1.6 result classified BEHAVIORAL_PASS_CANONICAL_FULL, and it
+establishes something specific: a continuous monolithic state does not need discrete slot
+isolation to hold two registers independently, provided both writing and persistence are
+supervised. It does not establish that the network learned arithmetic — the rotation ALU is
+parameter-free and exact, so what was learned is the routing into it.
+
+The sixth experiment removed the destination terms to ask whether persistence alone would have
+sufficed, and it did not. EXP-CYCLIC-PERSIST-ABL-01 reached 0.5375, with the asymmetry simply
+inverted: the supervised unaddressed register survived at 0.7710 while the never-supervised
+write register collapsed to 0.2597, and the step-1 destination readout sat at 0.1250 against
+0.10 chance. That completes a 2x2 grid over the same architecture, seed cohort, data and
+optimizer — terminal-only 0.0625, destination-only 0.6750, persistence-only 0.5375, joint
+0.9875 — and the joint cell is the only one that passes.
+
+Then the programme changed direction, on evidence rather than on the result. An
+architecture-to-implementation audit found that five of the seven mechanisms in the project's
+own target state machine were absent from active model code, and concluded that extending the
+recurrence horizon with Stage 3 composed sequences would refine a conventional recurrent cell
+without exercising any of them. It recommended de-prioritizing Stage 3 and moving the
+end-to-end work to a task with real alternatives, checkable transitions, dead ends and
+something for rollback to do. That recommendation was acted on: the isolation and
+transaction-gate machinery, a deterministic verifier, an action-conditioned brancher and a
+two-phase orchestrator were implemented, and the first
+[end-to-end evaluation](/research/experiments/experiment-3b-pathfinding-evaluation) of the
+assembled pipeline has now run and been recorded.
+
+So the honest summary of Phase 1.6 is that it closed its own supervision question and then
+stopped being the critical path. The arithmetic finding is real and bounded — joint supervision
+carries a monolithic recurrent state to near-perfect validation accuracy on a three-step trace
+with a fixed analytical ALU, on seen operand pairs only, with the protected split untouched and
+the ALU never learned. What it did not do is produce evidence about branching, verification or
+error containment, which is why the audit moved the programme rather than extending this one.
+Stage 3 remains unauthorized, and the protected test split remains firewalled.
